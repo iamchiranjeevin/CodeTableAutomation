@@ -15,12 +15,12 @@ import { AppStore } from '../app.store';
 import { ProductionTable, ProductionTableData } from './shared/types';
 
 interface ProductionTablesStore {
-  data: ProductionTable[];
+  data: ProductionTable | null;  // Now storing a single ProductionTable
   _dynamicDetails: ProductionTableData | null;
 }
 
 const initialState: ProductionTablesStore = {
-  data: [],
+  data: null,
   _dynamicDetails: null,
 };
 
@@ -32,28 +32,28 @@ export const ProductionTablesStore = signalStore(
     _appStore: inject(AppStore),
   })),
   withMethods(({ _productionTablesService, _appStore, ...store }) => ({
-    getTableDetailsById(id: number) {
-      return store.data().find(details => details.id === id);
+    getTableDetails() {
+      return store.data();
     },
-    loadProductionTables: rxMethod<void>(
+    loadProductionTable: rxMethod<string>(
       pipe(
-        switchMap(() => {
-          return _productionTablesService.getProductionTables().pipe(
+        switchMap((tableName: string) =>
+          _productionTablesService.getProductionTables(tableName).pipe(
             tapResponse({
               error: (error: { message: string }) => {
-                patchState(store, { data: [] });
-              },
-              next: tables => {
-                patchState(store, {
-                  data: tables,
-                });
-                _appStore.updateProductionTables(
-                  tables.map((table: ProductionTable) => table)
+                console.error(
+                  `Error fetching production table for ${tableName}:`,
+                  error.message
                 );
+                patchState(store, { data: null });
+              },
+              next: (table: ProductionTable) => {
+                patchState(store, { data: table });
+                _appStore.updateProductionTables([table]); // Store it in AppStore
               },
             })
-          );
-        })
+          )
+        )
       )
     ),
     updateDynamicDetails(details: ProductionTableData) {
@@ -61,9 +61,9 @@ export const ProductionTablesStore = signalStore(
     },
     getDynamicDetails() {
       return store._dynamicDetails;
-    }
+    },
   })),
-  withHooks(store => ({
+  withHooks((store) => ({
     onDestroy() {
       patchState(store, { _dynamicDetails: null });
     },

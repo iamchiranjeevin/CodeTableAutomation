@@ -80,7 +80,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     effect(() => {
       this.#route.params
         .pipe(takeUntilDestroyed(this.#destroyRef))
-        .subscribe(params => this.getTableDataById(params));
+        .subscribe(params => this.loadTableData(params));
     });
     this.dataSource = new MatTableDataSource(this.data());
   }
@@ -103,13 +103,22 @@ export class ProductionTablesComponent implements AfterViewInit {
     }
   }
 
-  private getTableDataById(params: Params) {
-    const id = params['id'];
-    const tableDetails = this.#productionTablesStore.getTableDetailsById(+id);
-    if (!tableDetails) {
+  private loadTableData(params: Params) {
+    const tableName = params['id']; // Extract tableName or id from URL
+    if (!tableName) {
       return;
     }
-    this.updateTableDetails(tableDetails);
+
+    // Load the production table data from store
+    this.#productionTablesStore.loadProductionTable(tableName);
+
+    // Wait for the store to update and fetch the new data
+    effect(() => {
+      const tableDetails = this.#productionTablesStore.getTableDetails();
+      if (tableDetails) {
+        this.updateTableDetails(tableDetails);
+      }
+    });
   }
 
   private updateTableDetails(tableDetails: ProductionTable) {
@@ -119,5 +128,6 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.columnsToDisplay.set(Array.from(keys));
     this.tableName.set(`${tableDetails.name} Production Table`);
     this.data.set(tableDetails.data);
+    this.dataSource.data = tableDetails.data;
   }
 }

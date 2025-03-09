@@ -1,0 +1,66 @@
+<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+  <mat-tab label="Dynamic Details">
+    <form [formGroup]="dynamicDetailsForm" class="dynamic-details-form">
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>Service Group</mat-label>
+        <input matInput formControlName="serviceGroup"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>AUTH AGENT TYPE</mat-label>
+        <input matInput formControlName="authAgentType"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>AUTH AGENT NAME</mat-label>
+        <input matInput formControlName="authAgentName"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>AUTH AGENT ID</mat-label>
+        <input matInput formControlName="authAgentId"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>AUTH AGENT MAIL GROUP</mat-label>
+        <input matInput formControlName="authAgentMailGroup"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>AUTH AGENT PHONE</mat-label>
+        <input matInput formControlName="authAgentPhone"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>AGENCY CODE</mat-label>
+        <input matInput formControlName="agencyCode"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>PROGRAM ON HOLD</mat-label>
+        <input matInput formControlName="programOnHold"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>HOLD BEGIN DATE</mat-label>
+        <input matInput formControlName="holdBeginDate" [matDatepicker]="beginDatePicker" />
+        <mat-datepicker-toggle matIconSuffix [for]="beginDatePicker">
+          <mat-icon matDatepickerToggleIcon>keyboard_arrow_down</mat-icon>
+        </mat-datepicker-toggle>
+        <mat-datepicker #beginDatePicker />
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>HOLD END DATE</mat-label>
+        <input matInput formControlName="holdEndDate" [matDatepicker]="endDatePicker" />
+        <mat-datepicker-toggle matIconSuffix [for]="endDatePicker">
+          <mat-icon matDatepickerToggleIcon>keyboard_arrow_down</mat-icon>
+        </mat-datepicker-toggle>
+        <mat-datepicker #endDatePicker />
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>COMMENTS</mat-label>
+        <input matInput formControlName="comments"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>ACTIVE</mat-label>
+        <input matInput formControlName="active"/>
+      </mat-form-field>
+      <mat-form-field class="dynamic-details-form-field">
+        <mat-label>CONTRACT CAP CHECK</mat-label>
+        <input matInput formControlName="contractCapCheck"/>
+      </mat-form-field>
+    </form>
+  </mat-tab>
+</mat-tab-group>

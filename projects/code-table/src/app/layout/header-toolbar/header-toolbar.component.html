@@ -1,0 +1,21 @@
+<mat-toolbar>
+  <button
+    (click)="toggleSideNav()"
+    aria-label="Button to display side nav"
+    mat-icon-button>
+    <mat-icon>menu</mat-icon>
+  </button>
+  @for (link of menuLinks(); track link.path) {
+    @if (link.children) {
+      <button [matMenuTriggerFor]="menu.childMenu()" mat-button>
+        <mat-icon iconPositionEnd>keyboard_arrow_down</mat-icon>
+        <span>{{ link.title }}</span>
+      </button>
+      <app-header-toolbar-menu #menu [menuLinks]="link.children"/>
+    } @else {
+      <a [routerLink]="link.path" mat-button [routerLinkActive]="'active'">{{
+          link.title
+        }}</a>
+    }
+  }
+</mat-toolbar>

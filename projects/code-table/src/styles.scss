@@ -1,0 +1,28 @@
+/* You can add global styles to this file, and also import other style files */
+@use 'tailwindcss';
+@use '@angular/material' as mat;
+
+:root {
+  --common-size: calc(1rem * .75);
+  --common-border-radius: var(--common-size);
+  --common-padding-size: var(--common-size);
+  --common-margin-size: var(--common-size);
+}
+
+html {
+  @apply h-full;
+  color-scheme: light;
+  @include mat.theme(
+      (
+        color: mat.$blue-palette,
+        typography: Roboto,
+        density: 0,
+      )
+  );
+
+  body {
+    @apply h-full;
+    margin: 0;
+    font-family: Roboto, 'Helvetica Neue', sans-serif;
+  }
+}

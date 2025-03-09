@@ -1,0 +1,13 @@
+<nav [tabPanel]="tabPanel" class="p-3" mat-tab-nav-bar>
+  @for (link of links(); track link.id) {
+    <a
+      mat-tab-link
+      (click)="navigate(link.path)"
+      [active]="activeIds().includes(link.id)">
+      {{ link.title }}
+    </a>
+  }
+</nav>
+<mat-tab-nav-panel #tabPanel>
+  <router-outlet/>
+</mat-tab-nav-panel>

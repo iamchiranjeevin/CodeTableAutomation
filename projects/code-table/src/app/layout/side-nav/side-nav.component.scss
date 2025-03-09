@@ -1,0 +1,5 @@
+.menu-link {
+  &.active {
+    background-color: var(--mat-sys-on-primary);
+  }
+}

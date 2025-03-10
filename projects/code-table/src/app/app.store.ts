@@ -244,7 +244,7 @@ export const AppStore = signalStore(
         table => {
           const menuLink: MenuLink = {
             title: table.name,
-            path: `${routeType.path}/${table.id}`,
+            path: `${routeType.path}/${table.name}`,
             id: uuid(),
           };
           return menuLink;

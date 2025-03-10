@@ -34,7 +34,7 @@ export const routes: Routes = [
       import('./production-tables/production-tables.component').then(
         m => m.ProductionTablesComponent
       ),
-    path: `${productionTables.path}/:id`,
+    path: `${productionTables.path}/:name`,
     title: productionTables.title,
   },
   {

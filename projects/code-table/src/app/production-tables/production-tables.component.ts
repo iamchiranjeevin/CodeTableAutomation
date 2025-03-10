@@ -104,7 +104,7 @@ export class ProductionTablesComponent implements AfterViewInit {
   }
 
   private loadTableData(params: Params) {
-    const tableName = params['id']; // Extract tableName or id from URL
+    const tableName = params['name']; // Extract tableName or id from URL
     if (!tableName) {
       return;
     }

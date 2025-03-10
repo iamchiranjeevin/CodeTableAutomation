@@ -9,11 +9,11 @@ import { ProductionTable } from '../shared/types';
 })
 export class ProductionTablesService {
   readonly #httpClient = inject(HttpClient);
-  private apiUrl = 'http://168.60.227.116:8080/productionTableDetails';
+  private apiUrl = 'http://168.60.227.116:8080/productionTableDetails';  
 
   getProductionTables(tableName: string): Observable<ProductionTable> {
     const requestPayload = { tableName };
     return this.#httpClient.post<ProductionTable>(this.apiUrl, requestPayload);
-  }
+  } 
 
 }

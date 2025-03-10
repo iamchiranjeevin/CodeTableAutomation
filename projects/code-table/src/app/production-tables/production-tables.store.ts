@@ -35,7 +35,7 @@ export const ProductionTablesStore = signalStore(
     getTableDetails() {
       return store.data();
     },
-    loadProductionTable: rxMethod<string>(
+    loadProductionTables: rxMethod<string>(
       pipe(
         switchMap((tableName: string) =>
           _productionTablesService.getProductionTables(tableName).pipe(

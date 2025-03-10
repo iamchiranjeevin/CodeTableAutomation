@@ -24,6 +24,6 @@ export class AppComponent {
 
   constructor() {
     this.#projectsStore.loadProjects();
-    this.#productionTablesStore.loadProductionTables();
+    this.#productionTablesStore.loadProductionTables('');
   }
 }

@@ -110,7 +110,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     }
 
     // Load the production table data from store
-    this.#productionTablesStore.loadProductionTable(tableName);
+    this.#productionTablesStore.loadProductionTables(tableName);
 
     // Wait for the store to update and fetch the new data
     effect(() => {

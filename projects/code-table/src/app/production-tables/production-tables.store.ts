@@ -16,7 +16,7 @@ import { ProductionTable, ProductionTableData } from './shared/types';
 
 interface ProductionTablesStore {
   data: any | null;  
-  _dynamicDetails: ProductionTableData | null;
+  _dynamicDetails: any | null;
 }
 
 const initialState: ProductionTablesStore = {

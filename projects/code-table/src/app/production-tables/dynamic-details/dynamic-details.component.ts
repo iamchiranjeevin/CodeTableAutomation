@@ -56,28 +56,44 @@ export class DynamicDetailsComponent {
     });
   }
 
-  patchFormWithDetails(details: ProductionTableData | null) {
+  patchFormWithDetails(details: ProductionTableData | null) {    
     console.log(details);
     if (details === null) {
       return;
     }
-    const formatToString = (value: string | number | boolean | null) => {
-      return String(value);
+
+    const formatToString = (value: string | number | boolean | null | undefined) => {
+      return value != null ? String(value) : '';
     };
+
+    const getValue = (obj: any, key: string): any => {
+      const normalizedKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+      return normalizedKey ? obj[normalizedKey] : null;
+    };
+
     this.dynamicDetailsForm.setValue({
-      active: formatToString(details['active']),
-      agencyCode: formatToString(details['agency_code']),
-      authAgentId: formatToString(details['auth_agent_id']),
-      authAgentMailGroup: formatToString(details['auth_agent_mail_code']),
-      authAgentName: formatToString(details['auth_agent_name']),
-      authAgentPhone: formatToString(details['auth_agent_phone']),
-      authAgentType: formatToString(details['auth_agent_type']),
-      comments: formatToString(details['comments']),
-      contractCapCheck: formatToString(details['contract_cap_check']),
-      holdBeginDate: formatToString(details['hold_begin_date']),
-      holdEndDate: formatToString(details['hold_end_date']),
-      programOnHold: formatToString(details['program_on_hold']),
-      serviceGroup: formatToString(details['service_group']),
+    active: formatToString(getValue(details, 'active')),
+    agencyCode: formatToString(getValue(details, 'agency_code')),
+    authAgentId: formatToString(getValue(details, 'auth_agent_id')),
+    authAgentMailGroup: formatToString(getValue(details, 'auth_agent_mail_code')),
+    authAgentName: formatToString(getValue(details, 'auth_agent_name')),
+    authAgentPhone: formatToString(getValue(details, 'auth_agent_phone')),
+    authAgentType: formatToString(getValue(details, 'auth_agent_type')),
+    comments: formatToString(getValue(details, 'comments')),
+    contractCapCheck: formatToString(getValue(details, 'contract_cap_check')),
+    holdBeginDate: formatToString(getValue(details, 'hold_begin_date')),
+    holdEndDate: formatToString(getValue(details, 'hold_end_date')),
+    programOnHold: formatToString(getValue(details, 'program_on_hold')),
+    serviceGroup: formatToString(getValue(details, 'service_group')),
     });
+  }
+
+  updateProductionTableData() {
+    if (this.dynamicDetailsForm.valid) {
+      console.log("Form Data:", this.dynamicDetailsForm.value);
+      // Call service/ API to update production table data
+    } else {
+      console.log("Form is invalid!");
+    }
   }
 }

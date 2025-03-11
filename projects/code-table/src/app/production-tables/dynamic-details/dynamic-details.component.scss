@@ -7,3 +7,24 @@
     @apply grow w-full sm:max-w-1/6;
   }
 }
+
+.button-container {
+  @apply w-full flex justify-start mt-4;
+}
+
+.custom-button {
+  width: 200px; /* Adjust based on form width */
+  height: 56px; /* Same height as mat-form-field */
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #e0dce5; /* Same as form fields */
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+}
+

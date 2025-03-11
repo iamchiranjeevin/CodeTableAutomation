@@ -130,7 +130,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.displayedColumns.set(Array.from(keys));
     this.columnsToDisplay.set(Array.from(keys));
     //this.tableName.set(`${tableDetails.name} Production Table`);
-    this.tableName.set(`AAH-AUTH_AGENT_HOLD Production Table`);
+    this.tableName.set(`SSAS_AUTH_AGENT_AND_HOLD Production Table`);
     this.data.set(tableRows);
   }
 }

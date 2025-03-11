@@ -25,7 +25,7 @@ const initialState: ProductionTablesStore = {
 };
 
 const hardcodedTables: ProductionTable[] = [
-  { id: 1, name: 'AAH-AUTH_AGENT_HOLD', data: [] }];
+  { id: 1, name: 'SSAS_AUTH_AGENT_AND_HOLD', data: [] }];
 
 export const ProductionTablesStore = signalStore(
   { providedIn: 'root' },

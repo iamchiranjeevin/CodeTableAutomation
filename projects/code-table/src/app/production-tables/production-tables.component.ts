@@ -76,7 +76,13 @@ export class ProductionTablesComponent implements AfterViewInit {
   readonly #route = inject(ActivatedRoute);
   readonly #destroyRef = inject(DestroyRef);
 
-  constructor() {
+  constructor() {    
+    this.#route.params.subscribe(params => {     
+      const name = params['name']; 
+      if (name) {
+        this.#productionTablesStore.loadProductionTables(name);
+      }
+    });
     effect(() => {
       this.#route.params
         .pipe(takeUntilDestroyed(this.#destroyRef))
@@ -104,30 +110,27 @@ export class ProductionTablesComponent implements AfterViewInit {
   }
 
   private loadTableData(params: Params) {
-    const tableName = params['name']; // Extract tableName or id from URL
+    const tableName = params['name']; 
     if (!tableName) {
       return;
     }
 
-    // Load the production table data from store
-    this.#productionTablesStore.loadProductionTables(tableName);
+    const tableRows = this.#productionTablesStore.getTableDetails();
+    if (!tableRows) {
+      return;
+    }
 
-    // Wait for the store to update and fetch the new data
-    effect(() => {
-      const tableDetails = this.#productionTablesStore.getTableDetails();
-      if (tableDetails) {
-        this.updateTableDetails(tableDetails);
-      }
-    });
+    this.updateTableDetails(tableRows);
+    
   }
 
-  private updateTableDetails(tableDetails: ProductionTable) {
+  private updateTableDetails(tableRows: any) {
     const keys = new Set<string>();
-    propsToSet(tableDetails, keys);
+    propsToSet(tableRows, keys);
     this.displayedColumns.set(Array.from(keys));
     this.columnsToDisplay.set(Array.from(keys));
-    this.tableName.set(`${tableDetails.name} Production Table`);
-    this.data.set(tableDetails.data);
-    this.dataSource.data = tableDetails.data;
+    //this.tableName.set(`${tableDetails.name} Production Table`);
+    this.tableName.set(`AAH-AUTH_AGENT_HOLD Production Table`);
+    this.data.set(tableRows);
   }
 }

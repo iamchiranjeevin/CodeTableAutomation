@@ -1,7 +1,7 @@
 import { ProductionTable } from './types';
 
-export function propsToSet(tableDetails: ProductionTable, keys: Set<string>) {
-  tableDetails.data.forEach(table =>
-    Object.keys(table).forEach(key => keys.add(key))
-  );
+export function propsToSet(rows: [], keys: Set<string>) { 
+  rows.forEach((row, index) => {   
+    Object.keys(row).forEach(key => keys.add(key));
+  });
 }

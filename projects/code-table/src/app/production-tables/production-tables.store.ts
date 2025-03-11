@@ -15,14 +15,17 @@ import { AppStore } from '../app.store';
 import { ProductionTable, ProductionTableData } from './shared/types';
 
 interface ProductionTablesStore {
-  data: ProductionTable | null;  // Now storing a single ProductionTable
+  data: any | null;  
   _dynamicDetails: ProductionTableData | null;
 }
 
 const initialState: ProductionTablesStore = {
-  data: null,
+  data: [],
   _dynamicDetails: null,
 };
+
+const hardcodedTables: ProductionTable[] = [
+  { id: 1, name: 'AAH-AUTH_AGENT_HOLD', data: [] }];
 
 export const ProductionTablesStore = signalStore(
   { providedIn: 'root' },
@@ -37,23 +40,27 @@ export const ProductionTablesStore = signalStore(
     },
     loadProductionTables: rxMethod<string>(
       pipe(
-        switchMap((tableName: string) =>
-          _productionTablesService.getProductionTables(tableName).pipe(
+        switchMap((name) => {
+          if (!name) {        
+        _appStore.updateProductionTables(hardcodedTables);
+        return []; // Return an empty observable array to prevent API call
+      }
+          return _productionTablesService.getProductionTables(name).pipe(
             tapResponse({
               error: (error: { message: string }) => {
-                console.error(
-                  `Error fetching production table for ${tableName}:`,
-                  error.message
-                );
                 patchState(store, { data: null });
               },
-              next: (table: ProductionTable) => {
-                patchState(store, { data: table });
-                _appStore.updateProductionTables([table]); // Store it in AppStore
+              next: tableRows => {
+                patchState(store, {
+                  data: tableRows,
+                });
+                _appStore.updateProductionTables(
+                  hardcodedTables
+                );
               },
             })
-          )
-        )
+          );
+        })
       )
     ),
     updateDynamicDetails(details: ProductionTableData) {
@@ -61,9 +68,9 @@ export const ProductionTablesStore = signalStore(
     },
     getDynamicDetails() {
       return store._dynamicDetails;
-    },
+    }
   })),
-  withHooks((store) => ({
+  withHooks(store => ({
     onDestroy() {
       patchState(store, { _dynamicDetails: null });
     },

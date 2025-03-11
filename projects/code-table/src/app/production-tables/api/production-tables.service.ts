@@ -12,7 +12,7 @@ export class ProductionTablesService {
 
   getProductionTables(tableName: string): Observable<any> {    
     return this.#httpClient
-      .post<{ rows: any[] }>(`${this.apiUrl}/${tableName}`, {})
+      .post<{ rows: any[] }>(`${this.apiUrl}`, {tableName})
       .pipe(map(response => response.rows || [])); 
 }
 }

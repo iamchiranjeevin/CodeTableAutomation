@@ -165,9 +165,12 @@ export class DynamicDetailsComponent {
   
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
             response => {
-              console.log("Update successful:", response);
-              const productionData = this.mapProductionTableRowToData(productionTableRow);
-              this.#productionTablesStore.updateDynamicDetails(productionData);
+              console.log("Update response:", response);
+              if (response.success) {
+                console.log("Update Success");
+                const productionData = this.mapProductionTableRowToData(productionTableRow);
+                this.#productionTablesStore.updateDynamicDetails(productionData);
+              }             
             },
             error => {
               console.error("Error updating data:", error);

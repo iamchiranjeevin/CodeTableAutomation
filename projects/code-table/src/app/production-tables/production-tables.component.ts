@@ -78,7 +78,8 @@ export class ProductionTablesComponent implements AfterViewInit {
   hiddenColumns = new Set<string>(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
      'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']);
   columnNameMapping: Record<string, string> = {
-      "SERVICE_GRP": "SERVICE_GROUP"
+      "SERVICE_GRP": "SERVICE_GROUP",
+      "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD"
     };
 
   constructor() {    

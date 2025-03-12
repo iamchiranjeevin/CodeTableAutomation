@@ -19,7 +19,7 @@
       </mat-form-field>
       <mat-form-field class="dynamic-details-form-field">
         <mat-label>AUTH AGENT MAIL GROUP</mat-label>
-        <input matInput formControlName="authAgentMailGroup"/>
+        <input matInput formControlName="authAgentMailCode"/>
       </mat-form-field>
       <mat-form-field class="dynamic-details-form-field">
         <mat-label>AUTH AGENT PHONE</mat-label>
@@ -31,7 +31,7 @@
       </mat-form-field>
       <mat-form-field class="dynamic-details-form-field">
         <mat-label>PROGRAM ON HOLD</mat-label>
-        <input matInput formControlName="programOnHold"/>
+        <input matInput formControlName="isProgramOnHold"/>
       </mat-form-field>
       <mat-form-field class="dynamic-details-form-field">
         <mat-label>HOLD BEGIN DATE</mat-label>
@@ -63,7 +63,7 @@
       </mat-form-field>
       <div class="button-container">
         <button mat-stroked-button class="custom-button" (click)="updateProductionTableData()">
-          Update
+          Production Update
         </button>
       </div>
     </form>

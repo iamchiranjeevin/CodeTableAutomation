@@ -75,6 +75,11 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.#productionTablesStore.getDynamicDetails();
   readonly #route = inject(ActivatedRoute);
   readonly #destroyRef = inject(DestroyRef);
+  hiddenColumns = new Set<string>(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
+     'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']);
+  columnNameMapping: Record<string, string> = {
+      "SERVICE_GRP": "SERVICE_GROUP"
+    };
 
   constructor() {    
     this.#route.params.subscribe(params => {     
@@ -124,11 +129,16 @@ export class ProductionTablesComponent implements AfterViewInit {
     
   }
 
+
   private updateTableDetails(tableRows: any) {
     const keys = new Set<string>();
     propsToSet(tableRows, keys);
     this.displayedColumns.set(Array.from(keys));
+    console.log("Displayed Columns:", this.displayedColumns());
+    console.log("Hidden Columns:", this.hiddenColumns);
     this.columnsToDisplay.set(Array.from(keys));
+    this.columnsToDisplay.set(this.displayedColumns().filter(column => !this.hiddenColumns.has(column)));
+    console.log("Columns to Display:", this.columnsToDisplay());
     //this.tableName.set(`${tableDetails.name} Production Table`);
     this.tableName.set(`SSAS_AUTH_AGENT_AND_HOLD Production Table`);
     this.data.set(tableRows);

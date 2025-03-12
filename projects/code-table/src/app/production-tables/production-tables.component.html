@@ -17,7 +17,7 @@
         *ngFor="let column of displayedColumns()"
         [matColumnDef]="column">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>
-          {{ column | snakeCaseToString }}
+          {{ columnNameMapping[column] || column | snakeCaseToString }}
         </th>
         <td *matCellDef="let element" mat-cell>{{ element[column] }}</td>
       </ng-container>

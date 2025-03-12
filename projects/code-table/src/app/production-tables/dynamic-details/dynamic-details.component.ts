@@ -137,13 +137,14 @@ export class DynamicDetailsComponent {
   }
   
   createUpdateRequestBody(userName: string, id: number, from: string, to: string, tblName:string, rowData: Record<string, any>) {
+    const { RECID, ...filteredRowData } = rowData;
     return {
       tableName: `MG1_${tblName}`,
       id: id.toString(),
       from: "",
       to: "",
       userName: userName,
-      row: rowData as UpdateRequestBody["row"]
+      row: filteredRowData as UpdateRequestBody["row"]
     };
   }
   

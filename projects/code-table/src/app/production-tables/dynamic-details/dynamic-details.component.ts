@@ -50,6 +50,8 @@ export class DynamicDetailsComponent {
     holdEndDate: [new FormControl('', Validators.required)],
     isProgramOnHold: [new FormControl('', Validators.required)],
     serviceGroup: [new FormControl('', Validators.required)],
+    id: [new FormControl('', Validators.required)],
+    recid: [new FormControl('', Validators.required)],
   });
   readonly #productionTablesStore = inject(ProductionTablesStore);
 
@@ -88,8 +90,10 @@ export class DynamicDetailsComponent {
     contractCapCheck: formatToString(getValue(details, 'contract_cap_check')),
     holdBeginDate: formatToString(getValue(details, 'hold_begin_date')),
     holdEndDate: formatToString(getValue(details, 'hold_end_date')),
-    isProgramOnHold: formatToString(getValue(details, 'program_on_hold')),
-    serviceGroup: formatToString(getValue(details, 'service_group')),
+    isProgramOnHold: formatToString(getValue(details, 'is_program_on_hold')),
+    serviceGroup: formatToString(getValue(details, 'service_grp')),
+    id: formatToString(getValue(details, 'id')),
+    recid: formatToString(getValue(details, 'rec_id')),
     });
   }
 
@@ -127,13 +131,14 @@ export class DynamicDetailsComponent {
       holdEndDate: formValues.holdEndDate || '',
       active: formValues.active || '',
       contractCapCheck: formValues.contractCapCheck || '',
-      comments: formValues.comments || ''
+      comments: formValues.comments || '',
+      recid: formValues.recid || ''
     };
   }
   
-  createUpdateRequestBody(userName: string, id: number, rowData: Record<string, any>) {
+  createUpdateRequestBody(userName: string, id: number, from: string, to: string, tblName:string, rowData: Record<string, any>) {
     return {
-      tableName: "MG1_SSAS_AUTH_AGENT_AND_HOLD",
+      tableName: `MG1_${tblName}`,
       id: id.toString(),
       from: "",
       to: "",
@@ -160,7 +165,8 @@ export class DynamicDetailsComponent {
           console.log("Converted ProductionTableRow:", productionTableRow);
           const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);
           console.log("Converted to UPPER_SNAKE_CASE:", productionTableRowReq);
-          const updateRequestBody = this.createUpdateRequestBody("00000382348", 20, productionTableRowReq);
+          const updateRequestBody = this.createUpdateRequestBody("00000382348", productionTableRow.id, productionTableRow.holdBeginDate,
+             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);
           console.log("Final UpdateRequestBody:", updateRequestBody);          
   
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(

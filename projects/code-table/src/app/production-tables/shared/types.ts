@@ -23,6 +23,7 @@ export type ProductionTableRow = {
   active: string;
   contractCapCheck:string;
   comments: string;
+  recid: string;
 };
 
 export type UpdateRequestBody = {

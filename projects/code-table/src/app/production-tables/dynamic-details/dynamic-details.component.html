@@ -1,6 +1,12 @@
 <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
   <mat-tab label="Dynamic Details">
     <form [formGroup]="dynamicDetailsForm" class="dynamic-details-form">
+      <mat-form-field class="hidden-field">
+        <input matInput formControlName="id"/>
+      </mat-form-field>
+      <mat-form-field class="hidden-field">
+        <input matInput formControlName="recid"/>
+      </mat-form-field>
       <mat-form-field class="dynamic-details-form-field">
         <mat-label>Service Group</mat-label>
         <input matInput formControlName="serviceGroup"/>

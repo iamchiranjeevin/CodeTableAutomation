@@ -17,6 +17,7 @@ import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { DynamicDetailsService } from './dynamic-details.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
+import { format, isValid, parseISO } from 'date-fns';
 
 @Component({
   selector: 'app-dynamic-details',
@@ -149,9 +150,7 @@ export class DynamicDetailsComponent {
   }
   
   updateProductionTableData() {
-    if (this.dynamicDetailsForm.valid) {
-      console.log("Form is valid");
-      console.log("Form Data:", this.dynamicDetailsForm.value);
+    if (this.dynamicDetailsForm.valid) {     
 
       this.confirmDialogService.openConfirmDialog({
         title: 'Code Table',
@@ -159,22 +158,21 @@ export class DynamicDetailsComponent {
         confirmText: 'OK',
         cancelText: 'Cancel'
       }).subscribe(result => {
-        if (result) {
-          console.log("User confirmed update");          
+        if (result) {             
          
-          const productionTableRow: ProductionTableRow = this.convertFormToProductionTableRow(this.dynamicDetailsForm);
-          console.log("Converted ProductionTableRow:", productionTableRow);
-          const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);
-          console.log("Converted to UPPER_SNAKE_CASE:", productionTableRowReq);
+          const productionTableRow: ProductionTableRow = this.convertFormToProductionTableRow(this.dynamicDetailsForm);       
+
+          productionTableRow.holdBeginDate = this.formatDate(productionTableRow.holdBeginDate) as string;;
+          productionTableRow.holdEndDate = this.formatDate(productionTableRow.holdEndDate) as string;          
+
+          const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);        
           const updateRequestBody = this.createUpdateRequestBody("00000382348", productionTableRow.id, productionTableRow.holdBeginDate,
-             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);
-          console.log("Final UpdateRequestBody:", updateRequestBody);          
+             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);                
   
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
             response => {
               console.log("Update response:", response);
-              if (response.success) {
-                console.log("Update Success");
+              if (response.success) {               
                 alert('Production update successful!');
                 const productionData = this.mapProductionTableRowToData(productionTableRow);
                 this.#productionTablesStore.updateDynamicDetails(productionData);
@@ -194,6 +192,18 @@ export class DynamicDetailsComponent {
 
   mapProductionTableRowToData(row: ProductionTableRow): ProductionTableData {
     return this.convertCamelKeysToUpperSnakeCase(row) as ProductionTableData;
+  }
+
+  formatDate(date: string | null): string | null {
+    if (!date) return null; 
+  
+    try {
+      const parsedDate = new Date(date);
+      return isValid(parsedDate) ? format(parsedDate, 'MM/dd/yyyy') : null; 
+    } catch (error) {
+      console.error("Invalid date format:", date);
+      return null;
+    }
   }
   
 }

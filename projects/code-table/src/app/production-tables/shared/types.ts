@@ -18,8 +18,8 @@ export type ProductionTableRow = {
   authAgentPhone: string;
   agencyCode: string;
   isProgramOnHold: string;
-  holdBeginDate: string;
-  holdEndDate: string;
+  holdBeginDate: string | null;
+  holdEndDate: string | null;
   active: string;
   contractCapCheck:string;
   comments: string;

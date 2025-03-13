@@ -7,7 +7,7 @@ import {
   HostBinding,
   inject,
   signal,
-  viewChild,
+  ViewChild,
 } from '@angular/core';
 import { ProductionTablesStore } from './production-tables.store';
 import {
@@ -34,6 +34,9 @@ import { propsToSet } from './shared/utils';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { DynamicDetailsComponent } from './dynamic-details/dynamic-details.component';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { ExportDialogComponent } from './shared/export-dialog.component';
 
 @Component({
   selector: 'app-production-tables',
@@ -55,6 +58,7 @@ import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
     MatSort,
     MatSortHeader,
     DynamicDetailsComponent,
+    MatIconModule,
   ],
   templateUrl: './production-tables.component.html',
   styleUrl: './production-tables.component.scss',
@@ -62,11 +66,12 @@ import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
   providers: [provideDateFnsAdapter()],
 })
 export class ProductionTablesComponent implements AfterViewInit {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
   @HostBinding('class') className = 'h-full';
   tableName = signal('');
   dataSource: MatTableDataSource<ProductionTableData>;
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
+
   protected displayedColumns = signal<string[]>([]);
   protected columnsToDisplay = signal<string[]>([]);
   protected data = signal<ProductionTableData[]>([]);
@@ -82,7 +87,7 @@ export class ProductionTablesComponent implements AfterViewInit {
       "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD"
     };
 
-  constructor() {    
+  constructor(public dialog: MatDialog) {    
     this.#route.params.subscribe(params => {     
       const name = params['name']; 
       if (name) {
@@ -98,8 +103,8 @@ export class ProductionTablesComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
   }
 
   showDetails(data: ProductionTableData) {
@@ -143,5 +148,52 @@ export class ProductionTablesComponent implements AfterViewInit {
     //this.tableName.set(`${tableDetails.name} Production Table`);
     this.tableName.set(`SSAS_AUTH_AGENT_AND_HOLD Production Table`);
     this.data.set(tableRows);
+    this.dataSource.data = tableRows;
   }
+
+openExportDialog() {
+  console.log('Opening Export Dialog...');
+  console.log('this.dataSource.data:', JSON.stringify(this.dataSource?.data, null, 2));
+
+  if (!this.dataSource || !this.dataSource.data || this.dataSource.data.length === 0) {
+    console.warn('No data available for export!');
+    return;
+  }
+
+  const dialogRef = this.dialog.open(ExportDialogComponent, {
+    width: '600px',
+    data: {
+      rows: this.dataSource.data, // Pass rows
+      columnsToDisplay: this.columnsToDisplay() // Pass column names
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(selectedData => {
+    if (selectedData) {
+      this.exportToCSV(selectedData);
+    }
+  });
+}
+
+exportToCSV(selectedRows: any[]) {
+  if (selectedRows.length === 0) {
+    alert('No rows selected for export!');
+    return;
+  }
+  const headers = this.columnsToDisplay(); // Convert signal to array
+  const csvContent = [
+    headers.join(','), // Header row
+    ...selectedRows.map(row => headers.map(col => row[col]).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'exported_data.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 }

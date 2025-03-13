@@ -175,11 +175,13 @@ export class DynamicDetailsComponent {
               console.log("Update response:", response);
               if (response.success) {
                 console.log("Update Success");
+                alert('Production update successful!');
                 const productionData = this.mapProductionTableRowToData(productionTableRow);
                 this.#productionTablesStore.updateDynamicDetails(productionData);
               }             
             },
             error => {
+              alert('Production update failed.');
               console.error("Error updating data:", error);
             }
           );

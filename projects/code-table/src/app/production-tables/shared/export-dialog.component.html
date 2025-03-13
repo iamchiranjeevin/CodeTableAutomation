@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Export CSV Data</h2>
+<mat-dialog-content>
+
+ 
+  <mat-checkbox [(ngModel)]="exportAll" (change)="toggleAllSelection(exportAll)">
+    Export all
+  </mat-checkbox>
+
+  <p>Select the data to export:</p>
+
+
+  <div *ngIf="rows.length > 0; else noData">
+    <table mat-table [dataSource]="rows" class="mat-elevation-z8">
+   
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox [(ngModel)]="exportAll" (change)="toggleAllSelection(exportAll)"></mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+          <mat-checkbox [(ngModel)]="row.selected"></mat-checkbox>
+        </td>
+      </ng-container>
+
+      <ng-container *ngFor="let column of columnsToDisplay" [matColumnDef]="column">
+        <th mat-header-cell *matHeaderCellDef> {{ column }} </th>
+        <td mat-cell *matCellDef="let row"> {{ row[column] }} </td>
+      </ng-container>
+
+      
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+
+ 
+  <ng-template #noData>
+    <p>No data available for export.</p>
+  </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button [mat-dialog-close]="getSelectedRows()">Export</button>
+</mat-dialog-actions>

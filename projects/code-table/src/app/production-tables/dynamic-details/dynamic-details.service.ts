@@ -9,7 +9,7 @@ import { UpdateRequestBody } from '../shared/types';
 
 export class DynamicDetailsService {
     readonly #httpClient = inject(HttpClient);
-    private apiUrl = 'http://168.60.227.116:8080/productionTableDetails';
+    private apiUrl = 'http://168.60.227.116:8080/productionTableUpdate';
 
     updateProductionTableRow(requestBody: UpdateRequestBody): Observable<any> {
         return this.#httpClient.post(`${this.apiUrl}`, { requestBody }); 

@@ -195,7 +195,7 @@ export class DynamicDetailsComponent {
   }
 
   formatDate(date: string | null): string | null {
-    if (!date) return null; 
+    if (!date) return ""; 
   
     try {
       const parsedDate = new Date(date);

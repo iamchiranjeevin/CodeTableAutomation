@@ -65,6 +65,11 @@ export const ProductionTablesStore = signalStore(
     ),
     updateDynamicDetails(details: ProductionTableData) {
       patchState(store, { _dynamicDetails: details });
+      patchState(store, {
+        data: store.data()?.map((item: ProductionTableData) =>
+          item['ID'] === details['ID'] ? details : item
+        ),
+      });
     },
     getDynamicDetails() {
       return store._dynamicDetails;

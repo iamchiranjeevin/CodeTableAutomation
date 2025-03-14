@@ -12,23 +12,41 @@
   @apply w-full flex justify-start mt-4;
 }
 
-.custom-button {
-  width: 200px; /* Adjust based on form width */
-  height: 56px; /* Same height as mat-form-field */
-  font-size: 16px;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #e0dce5; /* Same as form fields */
-  color: black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
-  font-weight: 500;
-  cursor: pointer;
-}
-
 .hidden-field {
   display: none; 
 }
+
+.custom-button {
+  background-color: #9575CD !important; 
+  color: white !important;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer; 
+  transition: background-color 0.3s ease-in-out;
+}
+
+.custom-button:hover {
+  background-color: #7E57C2 !important; 
+  cursor: pointer;
+}
+
+.success-toast {
+  background-color: #4CAF50 !important; /* Green */
+  color: white !important;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.error-toast {
+  background-color: #F44336 !important; /* Red */
+  color: white !important;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+
+
+
 

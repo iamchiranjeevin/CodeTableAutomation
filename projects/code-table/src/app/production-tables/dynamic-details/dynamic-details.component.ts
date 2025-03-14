@@ -2,8 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
-  inject,
-  Injectable 
+  inject   
 } from '@angular/core';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,9 +14,10 @@ import { ProductionTablesStore } from '../production-tables.store';
 import { ProductionTableData, ProductionTableRow, UpdateRequestBody } from '../shared/types';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { DynamicDetailsService } from './dynamic-details.service';
-import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
-import { format, isValid, parseISO } from 'date-fns';
+import { format, isValid } from 'date-fns';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 
 @Component({
   selector: 'app-dynamic-details',
@@ -57,7 +57,8 @@ export class DynamicDetailsComponent {
   readonly #productionTablesStore = inject(ProductionTablesStore);
 
   constructor(private dynamicDetailsService: DynamicDetailsService,
-    private confirmDialogService: ConfirmDialogService) {
+    private confirmDialogService: ConfirmDialogService,    
+    private snackBar: MatSnackBar) {
     effect(() => {
       const details = this.#productionTablesStore.getDynamicDetails();
       this.patchFormWithDetails(details());
@@ -148,7 +149,23 @@ export class DynamicDetailsComponent {
       row: filteredRowData as UpdateRequestBody["row"]
     };
   }
+  showSuccessToast(message: string) {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000, 
+      panelClass: ['success-toast'],
+      verticalPosition: 'top',
+      horizontalPosition: 'center'
+    });
+  }
   
+  showErrorToast(message: string) {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      panelClass: ['error-toast'],
+      verticalPosition: 'top',
+      horizontalPosition: 'center'
+    });
+  }
   updateProductionTableData() {
     if (this.dynamicDetailsForm.valid) {     
 
@@ -158,8 +175,8 @@ export class DynamicDetailsComponent {
         confirmText: 'OK',
         cancelText: 'Cancel'
       }).subscribe(result => {
-        if (result) {             
-         
+        if (result) { 
+
           const productionTableRow: ProductionTableRow = this.convertFormToProductionTableRow(this.dynamicDetailsForm);       
 
           productionTableRow.holdBeginDate = this.formatDate(productionTableRow.holdBeginDate) as string;;
@@ -167,8 +184,8 @@ export class DynamicDetailsComponent {
 
           const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);        
           const updateRequestBody = this.createUpdateRequestBody("00000382348", productionTableRow.id, productionTableRow.holdBeginDate,
-             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);                
-  
+             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);
+
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
             response => {
               console.log("Update response:", response);
@@ -176,6 +193,7 @@ export class DynamicDetailsComponent {
                 alert('Production update successful!');
                 const productionData = this.mapProductionTableRowToData(productionTableRow);
                 this.#productionTablesStore.updateDynamicDetails(productionData);
+                this.showSuccessToast("Production update successful!"); 
               }             
             },
             error => {
@@ -183,6 +201,9 @@ export class DynamicDetailsComponent {
               console.error("Error updating data:", error);
             }
           );
+
+
+
         }}); 
      
     } else {

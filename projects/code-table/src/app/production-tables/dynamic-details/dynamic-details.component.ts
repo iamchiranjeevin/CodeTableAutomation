@@ -154,7 +154,7 @@ export class DynamicDetailsComponent {
       duration: 3000, 
       panelClass: ['success-toast'],
       verticalPosition: 'top',
-      horizontalPosition: 'center'
+      horizontalPosition: 'right'
     });
   }
   
@@ -163,7 +163,7 @@ export class DynamicDetailsComponent {
       duration: 3000,
       panelClass: ['error-toast'],
       verticalPosition: 'top',
-      horizontalPosition: 'center'
+      horizontalPosition: 'right'
     });
   }
   updateProductionTableData() {
@@ -184,7 +184,7 @@ export class DynamicDetailsComponent {
 
           const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);        
           const updateRequestBody = this.createUpdateRequestBody("00000382348", productionTableRow.id, productionTableRow.holdBeginDate,
-             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);
+             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);             			 
 
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
             response => {

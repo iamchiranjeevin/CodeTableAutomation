@@ -8,6 +8,7 @@ import {
   inject,
   signal,
   ViewChild,
+  ChangeDetectorRef 
 } from '@angular/core';
 import { ProductionTablesStore } from './production-tables.store';
 import {
@@ -71,6 +72,8 @@ export class ProductionTablesComponent implements AfterViewInit {
   @HostBinding('class') className = 'h-full';
   tableName = signal('');
   dataSource: MatTableDataSource<ProductionTableData>;
+  totalRows: number = 0;
+  private cdr = inject(ChangeDetectorRef);
 
   protected displayedColumns = signal<string[]>([]);
   protected columnsToDisplay = signal<string[]>([]);
@@ -105,6 +108,15 @@ export class ProductionTablesComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+  
+    setTimeout(() => {
+      if (this.totalRows > 2500) {
+        this.paginator.pageSize = 2500;  
+        this.paginator.length = this.totalRows;
+        this.paginator.pageSizeOptions = []; 
+        this.cdr.detectChanges(); 
+      }
+    });
   }
 
   showDetails(data: ProductionTableData) {
@@ -131,6 +143,7 @@ export class ProductionTablesComponent implements AfterViewInit {
       return;
     }
 
+    this.totalRows = tableRows.length;
     this.updateTableDetails(tableRows);
     
   }
@@ -149,6 +162,10 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.tableName.set(`SSAS_AUTH_AGENT_AND_HOLD Production Table`);
     this.data.set(tableRows);
     this.dataSource.data = tableRows;
+
+    if (tableRows.length > 2500) {
+      this.dataSource.paginator = this.paginator;
+    }
   }
 
 openExportDialog() {

@@ -8,7 +8,7 @@
 
   <mat-divider class="w-full"></mat-divider>
 
-  <div class="overflow-x-auto max-w-full w-full grow">
+  <div class="overflow-x-auto max-w-full w-full grow prodtbldiv">    
     <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
       
       <!-- Dynamic Column Definitions -->
@@ -20,12 +20,18 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="columnsToDisplay()"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnsToDisplay();" (click)="showDetails(row)"></tr>
-    </table>
-  </div>
+      <tr class="mat-mdc-row-prod" mat-row *matRowDef="let row; columns: columnsToDisplay();" (click)="showDetails(row)"></tr>
+    </table>  
+</div>
 
   <!-- Pagination -->
-  <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+  <mat-paginator
+  *ngIf="totalRows > 2500"
+  [length]="totalRows"
+  [pageSize]="2500"
+  [pageSizeOptions]="[]"
+  [showFirstLastButtons]="true">
+</mat-paginator>  
 </div>
 
 <!-- Details Component -->

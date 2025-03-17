@@ -25,7 +25,8 @@ const initialState: ProductionTablesStore = {
 };
 
 const availableProductionTables: ProductionTable[] = [
-  { id: 1, name: 'SSAS_AUTH_AGENT_AND_HOLD', data: [] }];
+  { id: 1, name: 'SSAS_AUTH_AGENT_AND_HOLD', data: [] },
+  { id: 2, name: 'SSAS_CAP_THRESHOLD_CEILING', data: [] }];
 
 export const ProductionTablesStore = signalStore(
   { providedIn: 'root' },

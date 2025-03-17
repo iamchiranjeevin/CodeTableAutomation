@@ -31,7 +31,7 @@ import { SnakeCaseToStringPipe } from '../shared/pipes/snake-case-to-string.pipe
 import { MatPaginator } from '@angular/material/paginator';
 import { MatDivider } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { propsToSet } from './shared/utils';
+import { getDisplayTableName, propsToSet } from './shared/utils';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { DynamicDetailsComponent } from './dynamic-details/dynamic-details.component';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
@@ -149,12 +149,12 @@ export class ProductionTablesComponent implements AfterViewInit {
     }
 
     this.totalRows = tableRows.length;
-    this.updateTableDetails(tableRows);
+    this.updateTableDetails(tableRows, tableName);
     
   }
 
 
-  private updateTableDetails(tableRows: any) {
+  private updateTableDetails(tableRows: any, apiTableName: string) {
     const keys = new Set<string>();
     propsToSet(tableRows, keys);
     this.displayedColumns.set(Array.from(keys));
@@ -164,6 +164,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.columnsToDisplay.set(this.displayedColumns().filter(column => !this.hiddenColumns.has(column)));
     console.log("Columns to Display:", this.columnsToDisplay());
     //this.tableName.set(`${tableDetails.name} Production Table`);
+    const displayTableName = getDisplayTableName(apiTableName);
     this.tableName.set(`${DISPLAY_TABLE_NAME} PRODUCTION VIEW`);
     this.data.set(tableRows);
     this.dataSource.data = tableRows;

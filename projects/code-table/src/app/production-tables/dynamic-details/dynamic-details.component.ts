@@ -189,15 +189,13 @@ export class DynamicDetailsComponent {
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
             response => {
               console.log("Update response:", response);
-              if (response.success) {               
-                alert('Production update successful!');
+              if (response.success) { 
                 const productionData = this.mapProductionTableRowToData(productionTableRow);
                 this.#productionTablesStore.updateDynamicDetails(productionData);
                 this.showSuccessToast("Production update successful!"); 
               }             
             },
-            error => {
-              alert('Production update failed.');
+            error => {              
               console.error("Error updating data:", error);
             }
           );

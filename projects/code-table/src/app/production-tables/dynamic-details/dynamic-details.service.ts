@@ -12,6 +12,6 @@ export class DynamicDetailsService {
     private apiUrl = 'http://168.60.227.116:8080/productionTableUpdate';
 
     updateProductionTableRow(requestBody: UpdateRequestBody): Observable<any> {
-        return this.#httpClient.post(`${this.apiUrl}`, { requestBody }); 
+        return this.#httpClient.post(`${this.apiUrl}`, requestBody); 
       }
 }

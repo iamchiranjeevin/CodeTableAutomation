@@ -24,7 +24,7 @@ const initialState: ProductionTablesStore = {
   _dynamicDetails: null,
 };
 
-const hardcodedTables: ProductionTable[] = [
+const availableProductionTables: ProductionTable[] = [
   { id: 1, name: 'SSAS_AUTH_AGENT_AND_HOLD', data: [] }];
 
 export const ProductionTablesStore = signalStore(
@@ -42,7 +42,7 @@ export const ProductionTablesStore = signalStore(
       pipe(
         switchMap((name) => {
           if (!name) {        
-        _appStore.updateProductionTables(hardcodedTables);
+        _appStore.updateProductionTables(availableProductionTables);
         return []; // Return an empty observable array to prevent API call
       }
           return _productionTablesService.getProductionTables(name).pipe(
@@ -55,7 +55,7 @@ export const ProductionTablesStore = signalStore(
                   data: tableRows,
                 });
                 _appStore.updateProductionTables(
-                  hardcodedTables
+                  availableProductionTables
                 );
               },
             })

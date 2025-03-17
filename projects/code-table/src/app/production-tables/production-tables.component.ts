@@ -38,6 +38,10 @@ import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportDialogComponent } from './shared/export-dialog.component';
+import { CommonModule } from '@angular/common';
+
+const DISPLAY_TABLE_NAME = 'AAH-AUTH AGENT HOLD PRODUCTION VIEW';
+const API_TABLE_NAME = 'SSAS_AUTH_AGENT_AND_HOLD';
 
 @Component({
   selector: 'app-production-tables',
@@ -60,6 +64,7 @@ import { ExportDialogComponent } from './shared/export-dialog.component';
     MatSortHeader,
     DynamicDetailsComponent,
     MatIconModule,
+    [CommonModule]
   ],
   templateUrl: './production-tables.component.html',
   styleUrl: './production-tables.component.scss',
@@ -88,7 +93,7 @@ export class ProductionTablesComponent implements AfterViewInit {
   columnNameMapping: Record<string, string> = {
       "SERVICE_GRP": "SERVICE_GROUP",
       "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD"
-    };
+    };    
 
   constructor(public dialog: MatDialog) {    
     this.#route.params.subscribe(params => {     
@@ -159,7 +164,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.columnsToDisplay.set(this.displayedColumns().filter(column => !this.hiddenColumns.has(column)));
     console.log("Columns to Display:", this.columnsToDisplay());
     //this.tableName.set(`${tableDetails.name} Production Table`);
-    this.tableName.set(`SSAS_AUTH_AGENT_AND_HOLD Production Table`);
+    this.tableName.set(`${DISPLAY_TABLE_NAME} PRODUCTION VIEW`);
     this.data.set(tableRows);
     this.dataSource.data = tableRows;
 

@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
-  inject   
+  ElementRef,
+  inject,   
+  ViewChild
 } from '@angular/core';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -55,6 +57,8 @@ export class DynamicDetailsComponent {
     recid: [new FormControl('', Validators.required)],
   });
   readonly #productionTablesStore = inject(ProductionTablesStore);
+  @ViewChild('productionTable', { static: false }) productionTable!: ElementRef;
+
 
   constructor(private dynamicDetailsService: DynamicDetailsService,
     private confirmDialogService: ConfirmDialogService,    
@@ -184,7 +188,7 @@ export class DynamicDetailsComponent {
 
           const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);        
           const updateRequestBody = this.createUpdateRequestBody("00000382348", productionTableRow.id, productionTableRow.holdBeginDate,
-             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq);             			 
+             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq); 
 
           this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
             response => {
@@ -193,15 +197,17 @@ export class DynamicDetailsComponent {
                 const productionData = this.mapProductionTableRowToData(productionTableRow);
                 this.#productionTablesStore.updateDynamicDetails(productionData);
                 this.showSuccessToast("Production update successful!"); 
+                const productionTable = document.getElementById('productionTable');
+              if (productionTable) {
+              productionTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                this.#productionTablesStore.updateDynamicDetails(null);
               }             
             },
             error => {              
               console.error("Error updating data:", error);
             }
           );
-
-
-
         }}); 
      
     } else {

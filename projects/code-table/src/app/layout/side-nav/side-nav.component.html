@@ -1,0 +1,31 @@
+<mat-tree
+  #tree
+  [childrenAccessor]="childrenAccessor"
+  [dataSource]="dataSource()">
+  <!-- This is the tree node template for leaf nodes -->
+  <mat-tree-node
+    *matTreeNodeDef="let node"
+    class="menu-link"
+    matTreeNodePadding
+    routerLinkActive="active">
+    <!-- use a disabled button to provide padding for tree leaf -->
+    <button disabled mat-icon-button></button>
+    <a [routerLink]="node.path">{{ node.title }}</a>
+  </mat-tree-node>
+  <!-- This is the tree node template for expandable nodes -->
+  <mat-tree-node
+    *matTreeNodeDef="let node; when: hasChild"
+    [cdkTreeNodeTypeaheadLabel]="node.title"
+    matTreeNodePadding
+    matTreeNodeToggle>
+    <button
+      [attr.aria-label]="'Toggle ' + node.title"
+      mat-icon-button
+      matTreeNodeToggle>
+      <mat-icon class="mat-icon-rtl-mirror">
+        {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+      </mat-icon>
+    </button>
+    {{ node.title }}
+  </mat-tree-node>
+</mat-tree>

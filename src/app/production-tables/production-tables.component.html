@@ -1,0 +1,12 @@
+<mat-menu #tableMenu="matMenu">
+  <button mat-menu-item (click)="openSearchDialog(selectedTable)">
+    <mat-icon>search</mat-icon>
+    Search
+  </button>
+</mat-menu>
+
+<!-- Add to your table list -->
+<div (contextmenu)="onTableRightClick($event, table.name)" 
+     [matMenuTriggerFor]="tableMenu">
+  <!-- Your existing table list item content -->
+</div> 

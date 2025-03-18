@@ -1,0 +1,35 @@
+<h2 mat-dialog-title>Search {{data.tableName}}</h2>
+<mat-dialog-content>
+  <form [formGroup]="searchForm" class="search-form">
+    <ng-container *ngFor="let field of searchFields">
+      <!-- Dropdown Fields -->
+      <mat-form-field *ngIf="field.type === 'dropdown'">
+        <mat-label>{{field.label}}</mat-label>
+        <mat-select [formControlName]="field.name">
+          <mat-option>None</mat-option>
+          <mat-option *ngFor="let value of fieldValues[field.name]" [value]="value">
+            {{value}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Date Fields -->
+      <mat-form-field *ngIf="field.type === 'date'">
+        <mat-label>{{field.label}}</mat-label>
+        <input matInput [formControlName]="field.name" [matDatepicker]="picker">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <!-- Checkbox Fields -->
+      <mat-checkbox *ngIf="field.type === 'checkbox'" 
+                    [formControlName]="field.name">
+        {{field.label}}
+      </mat-checkbox>
+    </ng-container>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSearch()">Search</button>
+</mat-dialog-actions> 

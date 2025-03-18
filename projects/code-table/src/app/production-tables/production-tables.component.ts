@@ -31,7 +31,7 @@ import { SnakeCaseToStringPipe } from '../shared/pipes/snake-case-to-string.pipe
 import { MatPaginator } from '@angular/material/paginator';
 import { MatDivider } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getDisplayTableName, propsToSet } from './shared/utils';
+import { getApiTableName, getDisplayTableName, propsToSet } from './shared/utils';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { DynamicDetailsComponent } from './dynamic-details/dynamic-details.component';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
@@ -40,8 +40,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { ExportDialogComponent } from './shared/export-dialog.component';
 import { CommonModule } from '@angular/common';
 
-const DISPLAY_TABLE_NAME = 'AAH-AUTH AGENT HOLD PRODUCTION VIEW';
-const API_TABLE_NAME = 'SSAS_AUTH_AGENT_AND_HOLD';
 
 @Component({
   selector: 'app-production-tables',
@@ -99,7 +97,8 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.#route.params.subscribe(params => {     
       const name = params['name']; 
       if (name) {
-        this.#productionTablesStore.loadProductionTables(name);
+        const apiTableName = getApiTableName(name);
+        this.#productionTablesStore.loadProductionTables(apiTableName);
       }
     });
     effect(() => {
@@ -143,13 +142,14 @@ export class ProductionTablesComponent implements AfterViewInit {
       return;
     }
 
+    const apiTableName = getApiTableName(tableName);
     const tableRows = this.#productionTablesStore.getTableDetails();
     if (!tableRows) {
       return;
     }
 
     this.totalRows = tableRows.length;
-    this.updateTableDetails(tableRows, tableName);
+    this.updateTableDetails(tableRows, apiTableName);
     
   }
 
@@ -165,7 +165,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     console.log("Columns to Display:", this.columnsToDisplay());
     //this.tableName.set(`${tableDetails.name} Production Table`);
     const displayTableName = getDisplayTableName(apiTableName);
-    this.tableName.set(`${DISPLAY_TABLE_NAME} PRODUCTION VIEW`);
+    this.tableName.set(`${displayTableName} PRODUCTION VIEW`);
     this.data.set(tableRows);
     this.dataSource.data = tableRows;
 

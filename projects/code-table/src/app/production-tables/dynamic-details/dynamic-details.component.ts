@@ -4,12 +4,14 @@ import {
   effect,
   ElementRef,
   inject,   
-  ViewChild
+  QueryList,   
+  ViewChild,
+  ViewChildren
 } from '@angular/core';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatIcon } from '@angular/material/icon';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductionTablesStore } from '../production-tables.store';
@@ -19,10 +21,12 @@ import { DynamicDetailsService } from './dynamic-details.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
 import { format, isValid } from 'date-fns';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CommonModule } from '@angular/common';
 
 
 @Component({
   selector: 'app-dynamic-details',
+  standalone: true,
   imports: [
     MatTabGroup,
     MatTab,
@@ -31,6 +35,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatDatepickerModule,
     MatIcon,
     ReactiveFormsModule,
+    CommonModule    
   ],
   templateUrl: './dynamic-details.component.html',
   styleUrl: './dynamic-details.component.scss',
@@ -39,69 +44,137 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class DynamicDetailsComponent {
   readonly #fb = inject(FormBuilder);
-  protected dynamicDetailsForm = this.#fb.group({
-    active: [new FormControl('', Validators.required)],
-    agencyCode: [new FormControl('', Validators.required)],
-    authAgentId: [new FormControl('', Validators.required)],
-    authAgentMailCode: [new FormControl('', Validators.required)],
-    authAgentName: [new FormControl('', Validators.required)],
-    authAgentPhone: [new FormControl('', Validators.required)],
-    authAgentType: [new FormControl('', Validators.required)],
-    comments: [new FormControl('', Validators.required)],
-    contractCapCheck: [new FormControl('', Validators.required)],
-    holdBeginDate: [new FormControl('', Validators.required)],
-    holdEndDate: [new FormControl('', Validators.required)],
-    isProgramOnHold: [new FormControl('', Validators.required)],
-    serviceGroup: [new FormControl('', Validators.required)],
-    id: [new FormControl('', Validators.required)],
-    recid: [new FormControl('', Validators.required)],
-  });
+
+  
+  
   readonly #productionTablesStore = inject(ProductionTablesStore);
   @ViewChild('productionTable', { static: false }) productionTable!: ElementRef;
-
+  dynamicDetailsForm: FormGroup = this.#fb.group({});
+  columnKeys: string[] = [];
+  datePickers: { [key: string]: MatDatepicker<any> } = {};
+  @ViewChildren(MatDatepicker) datePickerRefs!: QueryList<MatDatepicker<any>>;
+  columnLabels: Record<string, string> | undefined;
+  protected readonly dynamicDetails = this.#productionTablesStore.getDynamicDetails();
 
   constructor(private dynamicDetailsService: DynamicDetailsService,
     private confirmDialogService: ConfirmDialogService,    
     private snackBar: MatSnackBar) {
-    effect(() => {
-      const details = this.#productionTablesStore.getDynamicDetails();
-      this.patchFormWithDetails(details());
+    effect(() => {      
+      this.buildDynamicForm();
     });
-  }
+  }  
 
-  patchFormWithDetails(details: ProductionTableData | null) {    
-    console.log(details);
-    if (details === null) {
-      return;
+  allowedColumnsMap: { [tableName: string]: string[] } = {
+    "SSAS_AUTH_AGENT_AND_HOLD": ["ID","REC_ID","SERVICE_GRP", "AUTH_AGENT_TYPE", "AUTH_AGENT_NAME",
+      "AUTH_AGENT_ID", "AUTH_AGENT_MAIL_CODE", "AUTH_AGENT_PHONE", "AGENCY_CODE",
+      "IS_PROGRAM_ON_HOLD", "HOLD_BEGIN_DATE", "HOLD_END_DATE", "COMMENTS", "ACTIVE", "CONTRACT_CAP_CHECK"]    
+  };
+  private convertUpperSnakeToUpperCase(key: string): string {
+    return key.replace(/_/g, ' '); 
+  }
+  buildDynamicForm() {
+    const selectedRowDetails = this.#productionTablesStore.getDynamicDetails()() as ProductionTableData | null;
+    if (!selectedRowDetails) {
+      console.log("No row selected for dynamic-details");
+      return; 
     }
 
-    const formatToString = (value: string | number | boolean | null | undefined) => {
-      return value != null ? String(value) : '';
+    const selectedTableValue = selectedRowDetails['REC_ID'];
+    console.log("selectedTableValue(REC_ID):", selectedTableValue);
+    const selectedTable = (typeof selectedTableValue === 'string' || typeof selectedTableValue === 'number') 
+                          ? selectedTableValue  : 'default'; 
+    const allowedColumns = this.allowedColumnsMap[selectedTable] || Object.keys(selectedRowDetails); 
+    console.log("allowedColumns:", allowedColumns);
+    this.columnKeys = Object.keys(selectedRowDetails).filter(key => allowedColumns.includes(key));
+
+    const customColumnLabels: Record<string, string> = {
+      "SERVICE_GRP": "SERVICE GROUP",
+      "AUTH_AGENT_MAIL_CODE": "AUTH AGENT MAIL GROUP",
+      "IS_PROGRAM_ON_HOLD": "PROGRAM ON HOLD"
     };
 
-    const getValue = (obj: any, key: string): any => {
-      const normalizedKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
-      return normalizedKey ? obj[normalizedKey] : null;
-    };
+  
+  this.columnLabels = this.columnKeys.reduce((map, key) => {
+    map[key] = customColumnLabels[key] || this.convertUpperSnakeToUpperCase(key);
+    return map;
+  }, {} as Record<string, string>);
 
-    this.dynamicDetailsForm.setValue({
-    active: formatToString(getValue(details, 'active')),
-    agencyCode: formatToString(getValue(details, 'agency_code')),
-    authAgentId: formatToString(getValue(details, 'auth_agent_id')),
-    authAgentMailCode: formatToString(getValue(details, 'auth_agent_mail_code')),
-    authAgentName: formatToString(getValue(details, 'auth_agent_name')),
-    authAgentPhone: formatToString(getValue(details, 'auth_agent_phone')),
-    authAgentType: formatToString(getValue(details, 'auth_agent_type')),
-    comments: formatToString(getValue(details, 'comments')),
-    contractCapCheck: formatToString(getValue(details, 'contract_cap_check')),
-    holdBeginDate: formatToString(getValue(details, 'hold_begin_date')),
-    holdEndDate: formatToString(getValue(details, 'hold_end_date')),
-    isProgramOnHold: formatToString(getValue(details, 'is_program_on_hold')),
-    serviceGroup: formatToString(getValue(details, 'service_grp')),
-    id: formatToString(getValue(details, 'id')),
-    recid: formatToString(getValue(details, 'rec_id')),
-    });
-  }
+  console.log("columnLabels mapping:", this.columnLabels);
+    
+    let formControls: { [key: string]: any } = {};
+    
+    this.columnKeys.forEach((key) => {
+      formControls[key] = [selectedRowDetails[key] ?? '']; 
+    });    
+
+    this.dynamicDetailsForm = this.#fb.group(formControls);
+  } 
+
+  updateProductionTableData2() { 
+    if (this.dynamicDetailsForm.valid) {   
+      console.log("Form Values:", this.dynamicDetailsForm.value);  
+        this.confirmDialogService.openConfirmDialog({
+            title: 'Code Table',
+            message: 'Are you sure you want to update production record?',
+            confirmText: 'OK',
+            cancelText: 'Cancel'
+        }).subscribe(result => {
+            if (result) { 
+                
+                let updatedFormValues = this.dynamicDetailsForm.value;
+                
+                const updatedUpperSnakeValues = this.convertCamelKeysToUpperSnakeCase(updatedFormValues);
+               
+                updatedUpperSnakeValues["SERVICE_GRP"] = updatedUpperSnakeValues["SERVICE_GROUP"] ?? updatedUpperSnakeValues["SERVICE_GRP"];
+                delete updatedUpperSnakeValues["SERVICE_GROUP"];
+
+                updatedUpperSnakeValues["AUTH_AGENT_MAIL_CODE"] = updatedUpperSnakeValues["AUTH_AGENT_MAIL_GROUP"] ?? updatedUpperSnakeValues["AUTH_AGENT_MAIL_CODE"];
+                delete updatedUpperSnakeValues["AUTH_AGENT_MAIL_GROUP"];
+                
+                const productionTableRow: ProductionTableRow = this.convertFormToProductionTableRow(this.dynamicDetailsForm);
+                
+                productionTableRow.holdBeginDate = this.formatDate(productionTableRow.holdBeginDate) as string;
+                productionTableRow.holdEndDate = this.formatDate(productionTableRow.holdEndDate) as string;
+                
+                const updateRequestBody = this.createUpdateRequestBody(
+                    "00000382348", // user ID
+                    productionTableRow.id,
+                    productionTableRow.holdBeginDate,
+                    productionTableRow.holdEndDate,
+                    productionTableRow.recid,
+                    updatedUpperSnakeValues
+                ); 
+
+                console.log('updateRequestBody: ', updateRequestBody);
+               
+                
+                this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
+                    response => {
+                        console.log("Update response:", response);
+                        if (response.success) { 
+                            const productionData = this.mapProductionTableRowToData(productionTableRow);
+                            this.#productionTablesStore.updateDynamicDetails(productionData);
+                            this.showSuccessToast("Production update successful!"); 
+                           
+                            const productionTable = document.getElementById('productionTable');
+                            if (productionTable) {
+                                productionTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+
+                            this.#productionTablesStore.updateDynamicDetails(null);
+                        }             
+                    },
+                    error => {              
+                        console.error("Error updating data:", error);
+                        this.showErrorToast("Failed to update production data.");
+                    }
+                );
+            }
+        }); 
+    } else {
+        console.warn("Form is invalid!", this.dynamicDetailsForm.errors);
+    }
+}
 
   convertCamelKeysToUpperSnakeCase<T extends Record<string, any>>(obj: T): Record<string, any> {
     const convertedObj: Record<string, any> = {};
@@ -124,21 +197,21 @@ export class DynamicDetailsComponent {
     const formValues = form.value; 
   
     return {
-      id: Number(formValues.id) || 0,
-      serviceGroup: formValues.serviceGroup || '',
-      authAgentType: formValues.authAgentType || '',
-      authAgentName: formValues.authAgentName || '',
-      authAgentId: formValues.authAgentId || '',
-      authAgentMailCode: formValues.authAgentMailCode || '',
-      authAgentPhone: formValues.authAgentPhone || '',
-      agencyCode: formValues.agencyCode || '',
-      isProgramOnHold: formValues.isProgramOnHold || '',
-      holdBeginDate: formValues.holdBeginDate || '',
-      holdEndDate: formValues.holdEndDate || '',
-      active: formValues.active || '',
-      contractCapCheck: formValues.contractCapCheck || '',
-      comments: formValues.comments || '',
-      recid: formValues.recid || ''
+      id: Number(formValues.ID) || 0,
+      serviceGroup: formValues.SERVICE_GRP || '',
+      authAgentType: formValues.AUTH_AGENT_TYPE || '',
+      authAgentName: formValues.AUTH_AGENT_NAME || '',
+      authAgentId: formValues.AUTH_AGENT_ID || '',
+      authAgentMailCode: formValues.AUTH_AGENT_MAIL_GROUP || '',
+      authAgentPhone: formValues.AUTH_AGENT_PHONE || '',
+      agencyCode: formValues.AGENCY_CODE || '',
+      isProgramOnHold: formValues.IS_PROGRAM_ON_HOLD || '',
+      holdBeginDate: formValues.HOLD_BEGIN_DATE || '',
+      holdEndDate: formValues.HOLD_END_DATE || '',
+      active: formValues.ACTIVE || '',
+      contractCapCheck: formValues.CONTRACT_CAP_CHECK || '',
+      comments: formValues.COMMENTS || '',
+      recid: formValues.REC_ID || ''
     };
   }
   
@@ -169,51 +242,7 @@ export class DynamicDetailsComponent {
       verticalPosition: 'top',
       horizontalPosition: 'right'
     });
-  }
-  updateProductionTableData() {
-    if (this.dynamicDetailsForm.valid) {     
-
-      this.confirmDialogService.openConfirmDialog({
-        title: 'Code Table',
-        message: 'Are you sure you want to update production record?',
-        confirmText: 'OK',
-        cancelText: 'Cancel'
-      }).subscribe(result => {
-        if (result) { 
-
-          const productionTableRow: ProductionTableRow = this.convertFormToProductionTableRow(this.dynamicDetailsForm);       
-
-          productionTableRow.holdBeginDate = this.formatDate(productionTableRow.holdBeginDate) as string;;
-          productionTableRow.holdEndDate = this.formatDate(productionTableRow.holdEndDate) as string;          
-
-          const productionTableRowReq = this.convertCamelKeysToUpperSnakeCase(productionTableRow);        
-          const updateRequestBody = this.createUpdateRequestBody("00000382348", productionTableRow.id, productionTableRow.holdBeginDate,
-             productionTableRow.holdEndDate, productionTableRow.recid, productionTableRowReq); 
-
-          this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
-            response => {
-              console.log("Update response:", response);
-              if (response.success) { 
-                const productionData = this.mapProductionTableRowToData(productionTableRow);
-                this.#productionTablesStore.updateDynamicDetails(productionData);
-                this.showSuccessToast("Production update successful!"); 
-                const productionTable = document.getElementById('productionTable');
-              if (productionTable) {
-              productionTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-                this.#productionTablesStore.updateDynamicDetails(null);
-              }             
-            },
-            error => {              
-              console.error("Error updating data:", error);
-            }
-          );
-        }}); 
-     
-    } else {
-      console.warn("Form is invalid!", this.dynamicDetailsForm.errors);
-    }
-  }
+  }  
 
   mapProductionTableRowToData(row: ProductionTableRow): ProductionTableData {
     return this.convertCamelKeysToUpperSnakeCase(row) as ProductionTableData;

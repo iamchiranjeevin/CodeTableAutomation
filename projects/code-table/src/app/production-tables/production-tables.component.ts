@@ -124,7 +124,9 @@ export class ProductionTablesComponent implements AfterViewInit {
   }
 
   showDetails(data: ProductionTableData) {
+    console.log('showDetails data:', data);
     this.#productionTablesStore.updateDynamicDetails(data);
+    
   }
 
   protected applyFilter(event: Event) {
@@ -158,6 +160,12 @@ export class ProductionTablesComponent implements AfterViewInit {
     const keys = new Set<string>();
     propsToSet(tableRows, keys);
     this.displayedColumns.set(Array.from(keys));
+    const tableSpecificHiddenColumns: Record<string, Set<string>> = {
+      "SSAS_AUTH_AGENT_AND_HOLD": new Set(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
+        'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']), 
+      "SSAS_CAP_THRESHOLD_CEILING": new Set([]),      
+  };
+  this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
     console.log("Displayed Columns:", this.displayedColumns());
     console.log("Hidden Columns:", this.hiddenColumns);
     this.columnsToDisplay.set(Array.from(keys));

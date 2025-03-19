@@ -1,0 +1,35 @@
+<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+  <mat-tab label="Dynamic Details">
+    <form [formGroup]="dynamicDetailsForm" class="dynamic-details-form">
+      <input type="hidden" formControlName="ID">
+     <input type="hidden" formControlName="REC_ID">
+      <ng-container *ngFor="let key of columnKeys">   
+        <ng-container *ngIf="key !== 'ID' && key !== 'REC_ID'"> 
+        <mat-form-field class="dynamic-details-form-field">
+          <mat-label>{{ columnLabels?.[key] | uppercase }}</mat-label>          
+          
+          <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'ID' && key !== 'REC_ID'; else normalInput">
+            <input matInput formControlName="{{ key }}" [matDatepicker]="datePicker"/>
+            <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
+            <mat-datepicker #datePicker></mat-datepicker>
+          </ng-container>        
+          
+          <ng-template #normalInput>
+            <input matInput formControlName="{{ key }}"/>
+          </ng-template>
+          
+        </mat-form-field>
+
+      </ng-container>
+        
+      </ng-container>
+
+      <div class="button-container">
+        <button mat-stroked-button class="custom-button" (click)="updateProductionTableData2()">
+          Production Update
+        </button>
+      </div>
+
+    </form>
+  </mat-tab>
+</mat-tab-group>

@@ -11,15 +11,9 @@ import { LayoutStore } from '../layout.store';
 @Component({
   imports: [
     MatToolbar,
-    MatAnchor,
-    MatButton,
     MatIcon,
-    MatMenuTrigger,
-    RouterLink,
-    HeaderToolbarMenuComponent,
-    RouterLinkActive,
-    MatIconButton,
-  ],
+    MatIconButton
+],
   selector: 'app-header-toolbar',
   styleUrl: './header-toolbar.component.scss',
   templateUrl: './header-toolbar.component.html',

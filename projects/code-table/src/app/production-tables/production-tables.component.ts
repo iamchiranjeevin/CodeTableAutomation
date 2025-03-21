@@ -97,15 +97,31 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.#route.params.subscribe(params => {     
       const name = params['name']; 
       if (name) {
+        // Clear dynamic details before loading new table
+        this.#productionTablesStore.updateDynamicDetails(null);
         const apiTableName = getApiTableName(name);
         this.#productionTablesStore.loadProductionTables(apiTableName);
       }
     });
     effect(() => {
-      this.#route.params
-        .pipe(takeUntilDestroyed(this.#destroyRef))
-        .subscribe(params => this.loadTableData(params));
+      const tableData = this.#productionTablesStore.getTableDetails();
+       if (tableData) {
+         this.dataSource.data = tableData;
+         this.totalRows = tableData.length;
+         if (tableData.length > 0) {
+           const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
+           this.updateTableDetails(tableData, apiTableName);
+         }
+       }
+     });
+     // Add a separate effect for handling dynamic details
+     effect(() => {
+      const dynamicDetails = this.#productionTablesStore.getDynamicDetails();
+      if (!dynamicDetails) {
+        this.cdr.detectChanges();
+      }
     });
+ 
     this.dataSource = new MatTableDataSource(this.data());
   }
 
@@ -121,11 +137,27 @@ export class ProductionTablesComponent implements AfterViewInit {
         this.cdr.detectChanges(); 
       }
     });
+
+    const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
+     if (apiTableName) {
+       this.#productionTablesStore.loadProductionTables(apiTableName);
+     }
   }
 
-  showDetails(data: ProductionTableData) {
-    console.log('showDetails data:', data);
-    this.#productionTablesStore.updateDynamicDetails(data);
+  showDetails(row: ProductionTableData) {
+    // Update store with selected row details
+    this.#productionTablesStore.updateDynamicDetails(row);
+
+    // Force change detection
+    this.cdr.detectChanges();
+     
+    // Scroll to details section after a brief delay to ensure rendering
+    setTimeout(() => {
+      const detailsElement = document.querySelector('app-dynamic-details');
+      if (detailsElement) {
+        detailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
     
   }
 
@@ -163,9 +195,12 @@ export class ProductionTablesComponent implements AfterViewInit {
     const tableSpecificHiddenColumns: Record<string, Set<string>> = {
       "SSAS_AUTH_AGENT_AND_HOLD": new Set(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
         'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']), 
-      "SSAS_CAP_THRESHOLD_CEILING": new Set([]),      
-  };
-  this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
+     "SSAS_CAP_THRESHOLD_CEILING": new Set([
+         'PHASE', 'REC_ID', 'PHASE_TYPE', 'CREATE_DATE', 'CREATE_BY',
+         'UPDATE_DATE', 'UPDATE_BY', 'STATUS', 'RANGE_LOWER_LIMIT', 'RANGE_UPPER_LIMIT'
+       ])
+     };
+     this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
     console.log("Displayed Columns:", this.displayedColumns());
     console.log("Hidden Columns:", this.hiddenColumns);
     this.columnsToDisplay.set(Array.from(keys));

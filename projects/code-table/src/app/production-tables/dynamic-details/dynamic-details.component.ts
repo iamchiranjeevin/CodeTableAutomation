@@ -145,8 +145,8 @@ export class DynamicDetailsComponent {
                     updatedUpperSnakeValues
                 ); 
 
-                console.log('updateRequestBody: ', updateRequestBody);
-               
+                console.log('updateRequestBody: ', updateRequestBody);              
+                
                 
                 this.dynamicDetailsService.updateProductionTableRow(updateRequestBody).subscribe(
                     response => {

@@ -89,9 +89,11 @@ export class ProductionTablesComponent implements AfterViewInit {
   hiddenColumns = new Set<string>(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
      'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']);
   columnNameMapping: Record<string, string> = {
-      "SERVICE_GRP": "SERVICE_GROUP",
-      "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD"
-    };    
+    "SERVICE_GRP": "SERVICE_GROUP",
+    "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD",
+    "SERVICE_LOWER_LIMIT": "RANGE_LOWER_LIMIT",
+    "SERVICE_UPPER_LIMIT": "RANGE_UPPER_LIMIT"
+  };    
 
   constructor(public dialog: MatDialog) {    
     this.#route.params.subscribe(params => {     
@@ -191,22 +193,31 @@ export class ProductionTablesComponent implements AfterViewInit {
   private updateTableDetails(tableRows: any, apiTableName: string) {
     const keys = new Set<string>();
     propsToSet(tableRows, keys);
-    this.displayedColumns.set(Array.from(keys));
+    // Map the column names
+    const mappedKeys = Array.from(keys).map(key => {
+      const mappedName = this.columnNameMapping[key];
+      if (mappedName) {
+        // Update the actual data to use the mapped column name
+        tableRows.forEach((row: any) => {
+          row[mappedName] = row[key];
+          delete row[key];
+        });
+        return mappedName;
+      }
+      return key;
+    });
+    
+    this.displayedColumns.set(mappedKeys);
     const tableSpecificHiddenColumns: Record<string, Set<string>> = {
       "SSAS_AUTH_AGENT_AND_HOLD": new Set(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
         'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']), 
      "SSAS_CAP_THRESHOLD_CEILING": new Set([
          'PHASE', 'REC_ID', 'PHASE_TYPE', 'CREATE_DATE', 'CREATE_BY',
-         'UPDATE_DATE', 'UPDATE_BY', 'STATUS', 'RANGE_LOWER_LIMIT', 'RANGE_UPPER_LIMIT'
+         'UPDATE_DATE', 'UPDATE_BY', 'STATUS'
        ])
      };
      this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
-    console.log("Displayed Columns:", this.displayedColumns());
-    console.log("Hidden Columns:", this.hiddenColumns);
-    this.columnsToDisplay.set(Array.from(keys));
-    this.columnsToDisplay.set(this.displayedColumns().filter(column => !this.hiddenColumns.has(column)));
-    console.log("Columns to Display:", this.columnsToDisplay());
-    //this.tableName.set(`${tableDetails.name} Production Table`);
+     this.columnsToDisplay.set(mappedKeys.filter(column => !this.hiddenColumns.has(column)));
     const displayTableName = getDisplayTableName(apiTableName);
     this.tableName.set(`${displayTableName} PRODUCTION VIEW`);
     this.data.set(tableRows);

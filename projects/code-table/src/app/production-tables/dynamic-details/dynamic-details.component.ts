@@ -13,7 +13,8 @@ import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
-import { MatIcon } from '@angular/material/icon';
+import { MatIcon, MatIconModule } from '@angular/material/icon';
+ import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductionTablesStore } from '../production-tables.store';
 import { ProductionTableData, ProductionTableRow, UpdateRequestBody, CapUpdateRequestBody, BaseUpdateRequestBody, DynamicTableRow, DynamicUpdateRequestBody } from '../shared/types';
@@ -47,12 +48,32 @@ const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = {
     MatDatepickerModule,
     MatIcon,
     ReactiveFormsModule,
-    CommonModule    
+    CommonModule,
+    MatIconModule,
+    MatButtonModule   
   ],
   templateUrl: './dynamic-details.component.html',
   styleUrl: './dynamic-details.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideDateFnsAdapter()]
+  providers: [provideDateFnsAdapter()],
+  styles: [`
+    .number-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .number-controls button {
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+    }
+    .number-controls mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+    }
+  `]
 })
 export class DynamicDetailsComponent {
   readonly #fb = inject(FormBuilder);  
@@ -68,6 +89,10 @@ export class DynamicDetailsComponent {
   @ViewChildren(MatDatepicker) datePickerRefs!: QueryList<MatDatepicker<any>>;
   columnLabels: Record<string, string> | undefined;
   protected readonly dynamicDetails = this.#productionTablesStore.getDynamicDetails();
+  private apiFieldMapping: Record<string, string> = {
+    "RANGE_LOWER_LIMIT": "SERVICE_LOWER_LIMIT",
+    "RANGE_UPPER_LIMIT": "SERVICE_UPPER_LIMIT"
+  };
 
   constructor(private dynamicDetailsService: DynamicDetailsService,
     private confirmDialogService: ConfirmDialogService,    
@@ -82,11 +107,11 @@ export class DynamicDetailsComponent {
     "SSAS_AUTH_AGENT_AND_HOLD": ["ID","REC_ID","SERVICE_GRP", "AUTH_AGENT_TYPE", "AUTH_AGENT_NAME",
       "AUTH_AGENT_ID", "AUTH_AGENT_MAIL_CODE", "AUTH_AGENT_PHONE", "AGENCY_CODE",
       "IS_PROGRAM_ON_HOLD", "HOLD_BEGIN_DATE", "HOLD_END_DATE", "COMMENTS", "ACTIVE", "CONTRACT_CAP_CHECK"],
-      "SSAS_CAP_THRESHOLD_CEILING": ["ID", "SERVICE_GRP", "CAP_ID", "CAP_TYPE", 
+      "SSAS_CAP_THRESHOLD_CEILING": ["ID", "REC_ID","SERVICE_GRP", "CAP_ID", "CAP_TYPE", 
        "LEVEL_OF_SERVICE", "SERVICE_CODES", "BEGIN_DATE", "END_DATE", "LIMIT_TYPE",
        "STATE_THRESHOLD", "COACH_THRESHOLD", "PERCENT_200_THRESHOLD", "LIFE_TIME_CAP_MET",
-       "AGE_LIMIT_TYPE", "RANGE_LIMITATION_SERVICE_CODE", "SERVICE_LOWER_LIMIT",
-       "SERVICE_UPPER_LIMIT", "ACTIVE", "COMMENTS", "TMHP_FLAG", "THRESHOLD_INDICATOR"]    
+       "AGE_LIMIT_TYPE", "RANGE_LIMITATION_SERVICE_CODE", "RANGE_LOWER_LIMIT",
+       "RANGE_UPPER_LIMIT", "ACTIVE", "COMMENTS", "TMHP_FLAG", "THRESHOLD_INDICATOR"]  
   };
   private convertUpperSnakeToUpperCase(key: string): string {
     return key.replace(/_/g, ' '); 
@@ -102,7 +127,8 @@ export class DynamicDetailsComponent {
       this.dynamicDetailsForm.reset();
     }
 
-    const selectedTableValue = selectedRowDetails['REC_ID'];    
+    const selectedTableValue = selectedRowDetails['REC_ID']; 
+    console.log('REC_ID print:', selectedTableValue);  
     const selectedTable = (typeof selectedTableValue === 'string' || typeof selectedTableValue === 'number') 
                           ? selectedTableValue  : 'default'; 
     const allowedColumns = this.allowedColumnsMap[selectedTable] || Object.keys(selectedRowDetails); 
@@ -282,28 +308,36 @@ export class DynamicDetailsComponent {
 
   private createDynamicPayload(baseRequest: BaseUpdateRequestBody, filteredRowData: Record<string, any>, tableType: string): DynamicUpdateRequestBody {
     if (tableType === 'SSAS_CAP_THRESHOLD_CEILING') {
+      // Map the display fields back to API fields
+      const mappedData = { ...filteredRowData };
+      Object.entries(this.apiFieldMapping).forEach(([displayName, apiName]) => {
+        if (mappedData[displayName] !== undefined) {
+          mappedData[apiName] = mappedData[displayName] as string | number;
+          delete mappedData[displayName];
+        }
+      });
       const row = {
-        ID: typeof filteredRowData['ID'] === 'string' ? parseInt(filteredRowData['ID']) : filteredRowData['ID'],
-        SERVICE_GROUP: filteredRowData['SERVICE_GRP'] || '21',
-        CAP_ID: filteredRowData['CAP_ID'] || '',
-        CAP_TYPE: filteredRowData['CAP_TYPE'] || '',
-        LEVEL_OF_SERVICE: filteredRowData['LEVEL_OF_SERVICE'] || '',
-        SERVICE_CODES: filteredRowData['SERVICE_CODES'] || '',
-        BEGIN_DATE: this.formatDate(filteredRowData['BEGIN_DATE']) || null,
-        END_DATE: this.formatDate(filteredRowData['END_DATE']) || null,
-        LIMIT_TYPE: parseInt(filteredRowData['LIMIT_TYPE']) || 1,
-        STATE_THRESHOLD: parseFloat(filteredRowData['STATE_THRESHOLD']) || 0,
-        COACH_THRESHOLD: parseFloat(filteredRowData['COACH_THRESHOLD']) || 0,
-        PERCENT_200_THRESHOLD: parseFloat(filteredRowData['PERCENT_200_THRESHOLD']) || 9999999.99,
-        LIFE_TIME_CAP_MET: filteredRowData['LIFE_TIME_CAP_MET'] || '',
-        AGE_LIMIT_TYPE: parseInt(filteredRowData['AGE_LIMIT_TYPE']) || 3,
-        RANGE_LIMITATION_SERVICE_CODE: filteredRowData['RANGE_LIMITATION_SERVICE_CODE'] || '',
-        SERVICE_LOWER_LIMIT: parseInt(filteredRowData['SERVICE_LOWER_LIMIT']) || 1,
-        SERVICE_UPPER_LIMIT: parseInt(filteredRowData['SERVICE_UPPER_LIMIT']) || 2,
-        ACTIVE: filteredRowData['ACTIVE'] || 'A',
-        COMMENTS: filteredRowData['COMMENTS'] || '',
-        TMHP_FLAG: filteredRowData['TMHP_FLAG'] || '',
-        THRESHOLD_INDICATOR: filteredRowData['THRESHOLD_INDICATOR'] || 'N'
+         ID: typeof mappedData['ID'] === 'string' ? parseInt(mappedData['ID']) : mappedData['ID'],
+         SERVICE_GROUP: mappedData['SERVICE_GRP'] || '21',
+         CAP_ID: mappedData['CAP_ID'] || '',
+         CAP_TYPE: mappedData['CAP_TYPE'] || '',
+         LEVEL_OF_SERVICE: mappedData['LEVEL_OF_SERVICE'] || '',
+         SERVICE_CODES: mappedData['SERVICE_CODES'] || '',
+         BEGIN_DATE: this.formatDate(mappedData['BEGIN_DATE']) || null,
+         END_DATE: this.formatDate(mappedData['END_DATE']) || null,
+         LIMIT_TYPE: parseInt(mappedData['LIMIT_TYPE']) || 1,
+         STATE_THRESHOLD: parseFloat(mappedData['STATE_THRESHOLD']) || 0,
+         COACH_THRESHOLD: parseFloat(mappedData['COACH_THRESHOLD']) || 0,
+         PERCENT_200_THRESHOLD: parseFloat(mappedData['PERCENT_200_THRESHOLD']) || 9999999.99,
+         LIFE_TIME_CAP_MET: mappedData['LIFE_TIME_CAP_MET'] || '',
+         AGE_LIMIT_TYPE: parseInt(mappedData['AGE_LIMIT_TYPE']) || 3,
+         RANGE_LIMITATION_SERVICE_CODE: mappedData['RANGE_LIMITATION_SERVICE_CODE'] || '',
+         SERVICE_LOWER_LIMIT: parseInt(String(mappedData['SERVICE_LOWER_LIMIT'])) || 1,
+         SERVICE_UPPER_LIMIT: parseInt(String(mappedData['SERVICE_UPPER_LIMIT'])) || 2,
+         ACTIVE: mappedData['ACTIVE'] || 'A',
+         COMMENTS: mappedData['COMMENTS'] || '',
+         TMHP_FLAG: mappedData['TMHP_FLAG'] || '',
+         THRESHOLD_INDICATOR: mappedData['THRESHOLD_INDICATOR'] || 'N'
       };
 
       return {
@@ -364,6 +398,26 @@ export class DynamicDetailsComponent {
       'CREATE_DATE'
     ];
     return key.toLowerCase().includes('date') && dateFields.includes(key);
+  }
+
+  isRangeLimitField(key: string): boolean {
+    return key === 'RANGE_LOWER_LIMIT' || key === 'RANGE_UPPER_LIMIT';
+  }
+
+  incrementValue(key: string): void {
+    const control = this.dynamicDetailsForm.get(key);
+    if (control) {
+      const currentValue = control.value ? parseInt(control.value) : 0;
+      control.setValue(currentValue + 1);
+    }
+  }
+
+  decrementValue(key: string): void {
+    const control = this.dynamicDetailsForm.get(key);
+    if (control) {
+      const currentValue = control.value ? parseInt(control.value) : 0;
+      control.setValue(Math.max(0, currentValue - 1)); // Prevent negative values
+    }
   }
   
 }

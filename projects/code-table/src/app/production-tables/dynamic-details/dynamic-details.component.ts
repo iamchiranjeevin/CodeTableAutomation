@@ -55,25 +55,7 @@ const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = {
   templateUrl: './dynamic-details.component.html',
   styleUrl: './dynamic-details.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideDateFnsAdapter()],
-  styles: [`
-    .number-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .number-controls button {
-      width: 24px;
-      height: 24px;
-      line-height: 24px;
-    }
-    .number-controls mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      line-height: 16px;
-    }
-  `]
+  providers: [provideDateFnsAdapter()] 
 })
 export class DynamicDetailsComponent {
   readonly #fb = inject(FormBuilder);  
@@ -401,7 +383,7 @@ export class DynamicDetailsComponent {
   }
 
   isRangeLimitField(key: string): boolean {
-    return key === 'RANGE_LOWER_LIMIT' || key === 'RANGE_UPPER_LIMIT';
+    return key === 'LIMIT_TYPE' || key === 'AGE_LIMIT_TYPE';
   }
 
   incrementValue(key: string): void {

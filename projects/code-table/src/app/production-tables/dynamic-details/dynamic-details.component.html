@@ -7,7 +7,7 @@
       <ng-container *ngFor="let key of columnKeys">   
         <ng-container *ngIf="key !== 'ID' && key !== 'REC_ID'"> 
           <mat-form-field appearance="outline" class="dynamic-details-form-field">
-            <mat-label>{{ columnLabels?.[key] | uppercase }}</mat-label>          
+            <mat-label>{{ columnLabels && columnLabels[key] | uppercase }}</mat-label>          
             
             <ng-container *ngIf="isDateField(key); else numberOrNormalInput">
               <input matInput formControlName="{{ key }}" [matDatepicker]="datePicker"/>

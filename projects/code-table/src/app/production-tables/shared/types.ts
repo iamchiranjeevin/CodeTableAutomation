@@ -1,12 +1,12 @@
-export type ProductionTable = {
-  name: string;
+export interface ProductionTable {
   id: number;
-  data: ProductionTableData[];
-};
+  name: string;
+  data: any[];
+}
 
-export type ProductionTableData = {
-  [key: string]: string | number | boolean | null;
-};
+export interface ProductionTableData {
+  [key: string]: any;
+}
 
 export type ProductionTableRow = {
   id:number;
@@ -91,4 +91,44 @@ export type CapUpdateRequestBody = BaseUpdateRequestBody & {
 };
 
 export type UpdateRequestBody = AAHUpdateRequestBody | CapUpdateRequestBody;
+
+export interface SearchField {
+  type: 'text' | 'number' | 'date' | 'select';
+  name: string;
+  label: string;
+  required?: boolean;
+  options?: Array<{
+    value: string | number;
+    label: string;
+  }>;
+}
+
+export interface SearchConfig {
+  enabled: boolean;
+  fields: SearchField[];
+}
+
+export interface TableConfig {
+  searchConfig?: SearchConfig;
+  // ... other table configuration properties
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
+}
+
+export interface SearchResponse {
+  results: ProductionTableData[];
+  totalCount: number;
+}
+
+export interface ColumnDefinition {
+  apiName: string;
+  displayName: string;
+  dataType: 'string' | 'number' | 'date' | 'boolean';
+  formatter?: (value: any) => any;
+  hidden?: boolean;
+}
 

@@ -17,7 +17,7 @@ import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductionTablesStore } from '../production-tables.store';
-import { ProductionTableData, ProductionTableRow, UpdateRequestBody, CapUpdateRequestBody, BaseUpdateRequestBody, DynamicTableRow, DynamicUpdateRequestBody } from '../shared/types';
+import { ProductionTableData, ProductionTableRow, UpdateRequestBody, BaseUpdateRequestBody, DynamicUpdateRequestBody } from '../shared/types';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { DynamicDetailsService } from './dynamic-details.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
@@ -25,16 +25,8 @@ import { format, isValid } from 'date-fns';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-
-const TABLE_NAME_API_MAPPING: Record<string, string> = {
-  'AAH-AUTH AGENT HOLD': 'SSAS_AUTH_AGENT_AND_HOLD',
-  'CAP- CAP_ THRESHOLD': 'SSAS_CAP_THRESHOLD_CEILING'
-};
-
-const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = {
-  'SSAS_AUTH_AGENT_AND_HOLD': 'AAH-AUTH AGENT HOLD',
-  'SSAS_CAP_THRESHOLD_CEILING': 'CAP- CAP_ THRESHOLD'
-};
+import { TableConfigService } from '../services/table-config.service';
+import { DataTransformationService } from '../services/data-transformation.service';
 
 @Component({
   selector: 'app-dynamic-details',
@@ -76,231 +68,110 @@ const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = {
 export class DynamicDetailsComponent {
   readonly #fb = inject(FormBuilder);
   readonly #productionTablesStore = inject(ProductionTablesStore);
-  readonly #route = inject(ActivatedRoute);
+  readonly #dynamicDetailsService = inject(DynamicDetailsService);
+  readonly #confirmDialog = inject(ConfirmDialogService);
+  readonly #snackBar = inject(MatSnackBar);
+  readonly #tableConfig = inject(TableConfigService);
+  readonly #dataTransformation = inject(DataTransformationService);
   readonly #cdr = inject(ChangeDetectorRef);
-  @ViewChild('productionTable', { static: false }) productionTable!: ElementRef;
-  dynamicDetailsForm: FormGroup = this.#fb.group({});
+
+  dynamicDetailsForm!: FormGroup;
+  currentRowData: any = {};
+  currentTableName: string = '';
+  currentApiTableName: string = '';
+  
+  // Add missing properties referenced in the template
   columnKeys: string[] = [];
-  datePickers: { [key: string]: MatDatepicker<any> } = {};
-  @ViewChildren(MatDatepicker) datePickerRefs!: QueryList<MatDatepicker<any>>;
-  columnLabels: Record<string, string> | undefined;
-  protected readonly dynamicDetails = this.#productionTablesStore.getDynamicDetails();
-  private apiFieldMapping: Record<string, string> = {
-    "RANGE_LOWER_LIMIT": "SERVICE_LOWER_LIMIT",
-    "RANGE_UPPER_LIMIT": "SERVICE_UPPER_LIMIT"
-  };
-
-  constructor(private dynamicDetailsService: DynamicDetailsService,
-    private confirmDialogService: ConfirmDialogService,    
-    private snackBar: MatSnackBar,
-    private router: ActivatedRoute) {
-    effect(() => {      
-      this.buildDynamicForm();
-    });
-  }  
-
-  allowedColumnsMap: { [tableName: string]: string[] } = {
-    "SSAS_AUTH_AGENT_AND_HOLD": ["ID", "REC_ID", "SERVICE_GRP", "AUTH_AGENT_TYPE", "AUTH_AGENT_NAME",
-      "AUTH_AGENT_ID", "AUTH_AGENT_MAIL_CODE", "AUTH_AGENT_PHONE", "AGENCY_CODE",
-      "IS_PROGRAM_ON_HOLD", "HOLD_BEGIN_DATE", "HOLD_END_DATE", "COMMENTS", "ACTIVE", "CONTRACT_CAP_CHECK"],
-    "SSAS_CAP_THRESHOLD_CEILING": ["ID", "SERVICE_GRP", "CAP_ID", "CAP_TYPE", 
-      "LEVEL_OF_SERVICE", "SERVICE_CODES", "BEGIN_DATE", "END_DATE", "LIMIT_TYPE",
-      "STATE_THRESHOLD", "COACH_THRESHOLD", "PERCENT_200_THRESHOLD", "LIFE_TIME_CAP_MET",
-      "AGE_LIMIT_TYPE", "RANGE_LIMITATION_SERVICE_CODE", "RANGE_LOWER_LIMIT",
-      "RANGE_UPPER_LIMIT", "ACTIVE", "COMMENTS", "TMHP_FLAG", "THRESHOLD_INDICATOR"]
-  };
-  private convertUpperSnakeToUpperCase(key: string): string {
-    return key.replace(/_/g, ' '); 
-  }
-  buildDynamicForm() {
-    const selectedRowDetails = this.#productionTablesStore.getDynamicDetails()();
-    if (!selectedRowDetails) {
-      return;
-    }
-
-    // Reset form state
-    if (this.dynamicDetailsForm) {
-      this.dynamicDetailsForm.reset();
-    }
-
-    const selectedTableValue = selectedRowDetails['REC_ID'];
-    const selectedTable = (typeof selectedTableValue === 'string' || typeof selectedTableValue === 'number') 
-                          ? selectedTableValue : 'default';
+  columnLabels: Record<string, string> = {};
   
-    // Get allowed columns
-    const allowedColumns = this.allowedColumnsMap[selectedTable] || Object.keys(selectedRowDetails);
-    this.columnKeys = Object.keys(selectedRowDetails).filter(key => allowedColumns.includes(key));
-
-    // Build form controls
-    const formControls: { [key: string]: any } = {};
-    this.columnKeys.forEach((key) => {
-      formControls[key] = [selectedRowDetails[key] ?? '']; 
-    });
-
-    // Create new form instance
-    this.dynamicDetailsForm = this.#fb.group(formControls);
-    
-    // Update column labels
-    this.updateColumnLabels();
-    
-    // Force change detection
-    this.#cdr.detectChanges();
+  isDateField(field: string): boolean {
+    const dataTypes = this.#tableConfig.getColumnDataTypes(this.currentApiTableName);
+    return dataTypes[field] === 'date';
   }
-
-  private updateColumnLabels() {
-    const customColumnLabels: Record<string, string> = {
-      "SERVICE_GRP": "SERVICE GROUP",
-      "AUTH_AGENT_MAIL_CODE": "AUTH AGENT MAIL GROUP",
-      "IS_PROGRAM_ON_HOLD": "PROGRAM ON HOLD"
-    };
-
-    this.columnLabels = this.columnKeys.reduce((map, key) => {
-      map[key] = customColumnLabels[key] || this.convertUpperSnakeToUpperCase(key);
-      return map;
-    }, {} as Record<string, string>);
+  
+  isRangeLimitField(field: string): boolean {
+    return field === 'RANGE_LOWER_LIMIT' || field === 'RANGE_UPPER_LIMIT';
   }
-
-  updateProductionTableData2() { 
-    if (this.dynamicDetailsForm.valid) {   
-      this.confirmDialogService.openConfirmDialog({
-        title: 'Code Table',
-        message: 'Are you sure you want to update production record?',
-        confirmText: 'OK',
-        cancelText: 'Cancel'
-      }).subscribe(result => {
-        if (result) { 
-          // Get the current table details
-          const currentDetails = this.#productionTablesStore.getDynamicDetails()();
-          const tableName = currentDetails?.['TABLE_NAME'] || 
-                           (currentDetails?.['REC_ID'] === 'SSAS_AUTH_AGENT_AND_HOLD' ? 'AAH-AUTH AGENT HOLD' : 'CAP- CAP_ THRESHOLD');
-          
-          let updatedFormValues = this.dynamicDetailsForm.value;
-          
-          // Convert form values to upper snake case
-          const updatedUpperSnakeValues = this.convertCamelKeysToUpperSnakeCase(updatedFormValues);
-          
-          // Handle special field mappings
-          updatedUpperSnakeValues["SERVICE_GRP"] = updatedUpperSnakeValues["SERVICE_GROUP"] ?? updatedUpperSnakeValues["SERVICE_GRP"];
-          delete updatedUpperSnakeValues["SERVICE_GROUP"];
-
-          updatedUpperSnakeValues["AUTH_AGENT_MAIL_CODE"] = updatedUpperSnakeValues["AUTH_AGENT_MAIL_GROUP"] ?? updatedUpperSnakeValues["AUTH_AGENT_MAIL_CODE"];
-          delete updatedUpperSnakeValues["AUTH_AGENT_MAIL_GROUP"];
-          
-          // Format dates if they exist
-          const dateFields = [
-            'HOLD_BEGIN_DATE', 
-            'HOLD_END_DATE', 
-            'BEGIN_DATE', 
-            'END_DATE',
-            'CREATE_DATE',
-            'UPDATE_DATE',
-            'UPDATE_BY'
-          ];
-
-          dateFields.forEach(field => {
-            if (updatedUpperSnakeValues[field]) {
-              updatedUpperSnakeValues[field] = this.formatDate(updatedUpperSnakeValues[field]);
-            }
-          });
-          
-          // Remove REC_ID
-          delete updatedUpperSnakeValues["REC_ID"];
-          
-          console.log('Table Name:', tableName);
-          console.log('Updated Values:', updatedUpperSnakeValues);
-
-          try {
-            const updateRequestBody = this.createUpdateRequestBody(
-              "00000382348", // user ID
-              updatedUpperSnakeValues['ID'],
-              "",
-              "",
-              tableName,
-              updatedUpperSnakeValues
-            );
-
-            console.log('Update Request Body:', updateRequestBody);
-
-            this.dynamicDetailsService.updateProductionTableRow(updateRequestBody as UpdateRequestBody).subscribe({
-              next: (response) => {
-                console.log('API Response:', response);
-                if (response && response.success) {
-                  this.showSuccessToast("Production update successful!");
-                  this.#productionTablesStore.updateDynamicDetails(null);
-                  
-                  const productionTable = document.getElementById('productionTable');
-                  if (productionTable) {
-                    productionTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                } else {
-                  const errorMessage = response?.message || "Failed to update production data.";
-                  this.showErrorToast(errorMessage);
-                  console.error('Update failed:', response);
-                }
-              },
-              error: (error) => {
-                console.error("Error updating data:", error);
-                this.showErrorToast("Failed to update production data.");
-              }
-            });
-          } catch (error) {
-            console.error('Error creating update request body:', error);
-            this.showErrorToast("Failed to create update request. Please try again.");
-          }
-        }
-      });
+  
+  incrementValue(field: string): void {
+    const control = this.dynamicDetailsForm.get(field);
+    if (control) {
+      const currentValue = Number(control.value) || 0;
+      control.setValue(currentValue + 1);
     }
   }
-
-  convertCamelKeysToUpperSnakeCase<T extends Record<string, any>>(obj: T): Record<string, any> {
-    const convertedObj: Record<string, any> = {};
   
-    Object.keys(obj).forEach((key) => {
-      let snakeKey = key.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase(); // Convert camelCase to UPPER_SNAKE_CASE
-  
-      // Special case for 'serviceGroup' mapping to 'SERVICE_GRP'
-      if (key === "serviceGroup") {
-        snakeKey = "SERVICE_GRP";
+  decrementValue(field: string): void {
+    const control = this.dynamicDetailsForm.get(field);
+    if (control) {
+      const currentValue = Number(control.value) || 0;
+      if (currentValue > 0) {
+        control.setValue(currentValue - 1);
       }
-  
-      convertedObj[snakeKey] = obj[key]; // Assign the value
-    });
-  
-    return convertedObj;
+    }
   }
 
-  convertFormToProductionTableRow(form: FormGroup): ProductionTableRow {
-    const formValues = form.value; 
-  
-    return {
-      id: Number(formValues['ID']) || 0,
-      serviceGroup: formValues['SERVICE_GRP'] || '',
-      authAgentType: formValues['AUTH_AGENT_TYPE'] || '',
-      authAgentName: formValues['AUTH_AGENT_NAME'] || '',
-      authAgentId: formValues['AUTH_AGENT_ID'] || '',
-      authAgentMailCode: formValues['AUTH_AGENT_MAIL_GROUP'] || '',
-      authAgentPhone: formValues['AUTH_AGENT_PHONE'] || '',
-      agencyCode: formValues['AGENCY_CODE'] || '',
-      isProgramOnHold: formValues['IS_PROGRAM_ON_HOLD'] || '',
-      holdBeginDate: formValues['HOLD_BEGIN_DATE'] || '',
-      holdEndDate: formValues['HOLD_END_DATE'] || '',
-      active: formValues['ACTIVE'] || '',
-      contractCapCheck: formValues['CONTRACT_CAP_CHECK'] || '',
-      comments: formValues['COMMENTS'] || '',
-      recid: formValues['REC_ID'] || ''
-    };
+  saveChanges() {
+    if (!this.dynamicDetailsForm.valid) return;
+    
+    // Get form values
+    const formValues = this.dynamicDetailsForm.getRawValue();
+    
+    // Transform display data to API format
+    const apiData = this.#dataTransformation.transformDisplayToApi(
+      this.currentApiTableName,
+      formValues
+    );
+    
+    // Create update request body
+    const updateRequest = this.createUpdateRequestBody(
+      '0000038234', // UserName
+      this.currentRowData.ID || 0,
+      '',
+      '',
+      this.currentTableName,
+      apiData
+    );
+    
+    // Fix the method call to match the service signature
+    this.#confirmDialog.openConfirmDialog({
+      title: 'Confirm Update',
+      message: 'Are you sure you want to update this record?'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.#dynamicDetailsService.updateData(updateRequest).subscribe({
+          next: (response: any) => {
+            this.#snackBar.open('Record updated successfully', 'Close', {
+              duration: 3000
+            });
+            
+            // Refresh the table data
+            this.#productionTablesStore.loadProductionTables(this.currentApiTableName);
+          },
+          error: (error: any) => {
+            this.#snackBar.open('Failed to update record', 'Close', {
+              duration: 3000
+            });
+            console.error('Update failed:', error);
+          }
+        });
+      }
+    });
   }
+  
+  // Add the missing property for the template
+  updateProductionTableData2 = this.saveChanges.bind(this);
   
   createUpdateRequestBody(userName: string, id: number, from: string, to: string, displayTableName: string, rowData: Record<string, any>): DynamicUpdateRequestBody {
     const { REC_ID, RECID, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY, ...filteredRowData } = rowData;
     
-    const apiTableName = TABLE_NAME_API_MAPPING[displayTableName] || displayTableName;
+    const apiTableName = this.#tableConfig.getApiName(displayTableName);
     
     const baseRequest = {
       tableName: `MG1_${apiTableName}`,
       id: id.toString(),
-      from: "",
-      to: "",
+      from: from,
+      to: to,
       userName: userName,
     };
 
@@ -308,127 +179,17 @@ export class DynamicDetailsComponent {
   }
 
   private createDynamicPayload(baseRequest: BaseUpdateRequestBody, filteredRowData: Record<string, any>, tableType: string): DynamicUpdateRequestBody {
-    if (tableType === 'SSAS_CAP_THRESHOLD_CEILING') {
-      // Map the display fields back to API fields
-      const mappedData = { ...filteredRowData };
-      Object.entries(this.apiFieldMapping).forEach(([displayName, apiName]) => {
-        if (mappedData[displayName] !== undefined) {
-          mappedData[apiName] = mappedData[displayName] as string | number;
-          delete mappedData[displayName];
-        }
-      });
-
-      const row = {
-        ID: typeof mappedData['ID'] === 'string' ? parseInt(mappedData['ID']) : mappedData['ID'],
-        SERVICE_GROUP: mappedData['SERVICE_GRP'] || '21',
-        CAP_ID: mappedData['CAP_ID'] || '',
-        CAP_TYPE: mappedData['CAP_TYPE'] || '',
-        LEVEL_OF_SERVICE: mappedData['LEVEL_OF_SERVICE'] || '',
-        SERVICE_CODES: mappedData['SERVICE_CODES'] || '',
-        BEGIN_DATE: this.formatDate(mappedData['BEGIN_DATE']) || null,
-        END_DATE: this.formatDate(mappedData['END_DATE']) || null,
-        LIMIT_TYPE: parseInt(mappedData['LIMIT_TYPE']) || 1,
-        STATE_THRESHOLD: parseFloat(mappedData['STATE_THRESHOLD']) || 0,
-        COACH_THRESHOLD: parseFloat(mappedData['COACH_THRESHOLD']) || 0,
-        PERCENT_200_THRESHOLD: parseFloat(mappedData['PERCENT_200_THRESHOLD']) || 9999999.99,
-        LIFE_TIME_CAP_MET: mappedData['LIFE_TIME_CAP_MET'] || '',
-        AGE_LIMIT_TYPE: parseInt(mappedData['AGE_LIMIT_TYPE']) || 3,
-        RANGE_LIMITATION_SERVICE_CODE: mappedData['RANGE_LIMITATION_SERVICE_CODE'] || '',
-        SERVICE_LOWER_LIMIT: parseInt(String(mappedData['SERVICE_LOWER_LIMIT'])) || 1,
-        SERVICE_UPPER_LIMIT: parseInt(String(mappedData['SERVICE_UPPER_LIMIT'])) || 2,
-        ACTIVE: mappedData['ACTIVE'] || 'A',
-        COMMENTS: mappedData['COMMENTS'] || '',
-        TMHP_FLAG: mappedData['TMHP_FLAG'] || '',
-        THRESHOLD_INDICATOR: mappedData['THRESHOLD_INDICATOR'] || 'N'
-      };
-
-      return {
-        ...baseRequest,
-        row
-      };
+    // Get table configuration
+    const config = this.#tableConfig.getConfig(tableType);
+    if (!config) {
+      console.warn(`No configuration found for table: ${tableType}`);
+      return { ...baseRequest, row: filteredRowData };
     }
-
-    // Handle other table types (AAH)
+    
+    // Use the configuration to create the payload
     return {
       ...baseRequest,
-      row: {
-        ...filteredRowData,
-        ID: typeof filteredRowData['ID'] === 'string' ? parseInt(filteredRowData['ID']) : filteredRowData['ID']
-      }
+      row: filteredRowData
     };
-  }
-
-  showSuccessToast(message: string) {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000, 
-      panelClass: ['success-toast'],
-      verticalPosition: 'top',
-      horizontalPosition: 'right'
-    });
-  }
-  
-  showErrorToast(message: string) {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      panelClass: ['error-toast'],
-      verticalPosition: 'top',
-      horizontalPosition: 'right'
-    });
-  }  
-
-  mapProductionTableRowToData(row: ProductionTableRow): ProductionTableData {
-    return this.convertCamelKeysToUpperSnakeCase(row) as ProductionTableData;
-  }
-
-  private formatDate(date: string | Date | null): string | null {
-    if (!date) return null;
-    
-    let dateObj: Date;
-    if (typeof date === 'string') {
-      // Handle string date input
-      dateObj = new Date(date);
-    } else {
-      dateObj = date;
-    }
-    
-    if (!isValid(dateObj)) return null;
-    
-    // Format as MM/DD/YYYY with leading zeros
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const year = dateObj.getFullYear();
-    
-    return `${month}/${day}/${year}`;
-  }
-  
-  isDateField(key: string): boolean {
-    const dateFields = [
-      'HOLD_BEGIN_DATE', 
-      'HOLD_END_DATE', 
-      'BEGIN_DATE', 
-      'END_DATE',
-      'CREATE_DATE'
-    ];
-    return key.toLowerCase().includes('date') && dateFields.includes(key);
-  }
-
-  isRangeLimitField(key: string): boolean {
-    return key === 'RANGE_LOWER_LIMIT' || key === 'RANGE_UPPER_LIMIT';
-  }
-
-  incrementValue(key: string): void {
-    const control = this.dynamicDetailsForm.get(key);
-    if (control) {
-      const currentValue = control.value ? parseInt(control.value) : 0;
-      control.setValue(currentValue + 1);
-    }
-  }
-
-  decrementValue(key: string): void {
-    const control = this.dynamicDetailsForm.get(key);
-    if (control) {
-      const currentValue = control.value ? parseInt(control.value) : 0;
-      control.setValue(Math.max(0, currentValue - 1)); // Prevent negative values
-    }
   }
 }

@@ -1,6 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
@@ -9,6 +9,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { SearchCriteriaService } from '../../services/search-criteria.service';
+import { TableSearchConfig } from '../../config/search-config.types';
+
+interface DialogData {
+  searchConfig: TableSearchConfig;
+}
 
 @Component({
   selector: 'app-search-criteria-dialog',
@@ -28,65 +33,30 @@ import { SearchCriteriaService } from '../../services/search-criteria.service';
     <div class="search-form">
       <h2 mat-dialog-title>Search Criteria</h2>
       <form [formGroup]="searchForm">
-        <mat-form-field>
-          <mat-label>Service Group</mat-label>
-          <mat-select formControlName="serviceGroup">
-            <mat-option *ngFor="let group of serviceGroups" [value]="group">
-              {{group}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+        <ng-container *ngFor="let field of data.searchConfig.fields">
+          <ng-container [ngSwitch]="field.type">
+            <mat-form-field *ngSwitchCase="'select'">
+              <mat-label>{{field.label}}</mat-label>
+              <mat-select [formControlName]="field.field">
+                <mat-option *ngFor="let option of getFieldOptions(field.field)" [value]="option">
+                  {{option}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>CAP ID</mat-label>
-          <mat-select formControlName="capId">
-            <mat-option *ngFor="let id of capIds" [value]="id">
-              {{id}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+            <mat-form-field *ngSwitchCase="'date'">
+              <mat-label>{{field.label}}</mat-label>
+              <input matInput [matDatepicker]="picker" [formControlName]="field.field">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>CAP Type</mat-label>
-          <mat-select formControlName="capType">
-            <mat-option *ngFor="let type of capTypes" [value]="type">
-              {{type}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Service Code</mat-label>
-          <mat-select formControlName="serviceCode">
-            <mat-option *ngFor="let code of serviceCodes" [value]="code">
-              {{code}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Begin Date</mat-label>
-          <input matInput [matDatepicker]="beginPicker" formControlName="beginDate">
-          <mat-datepicker-toggle matSuffix [for]="beginPicker"></mat-datepicker-toggle>
-          <mat-datepicker #beginPicker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>End Date</mat-label>
-          <input matInput [matDatepicker]="endPicker" formControlName="endDate">
-          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-          <mat-datepicker #endPicker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Active</mat-label>
-          <mat-select formControlName="active">
-            <mat-option value="A">Active</mat-option>
-            <mat-option value="C">Inactive</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-checkbox formControlName="history">History</mat-checkbox>
+            <mat-checkbox *ngSwitchCase="'checkbox'"
+                         [formControlName]="field.field">
+              {{field.label}}
+            </mat-checkbox>
+          </ng-container>
+        </ng-container>
       </form>
     </div>
     <mat-dialog-actions align="end">
@@ -98,32 +68,57 @@ import { SearchCriteriaService } from '../../services/search-criteria.service';
   styleUrls: ['./search-criteria-dialog.component.scss']
 })
 export class SearchCriteriaDialogComponent implements OnInit {
-  private readonly searchCriteriaService = inject(SearchCriteriaService);
-  private readonly fb = inject(FormBuilder);
-  private readonly dialogRef = inject(MatDialogRef<SearchCriteriaDialogComponent>);
-
-  searchForm!: FormGroup;
+  searchForm: FormGroup;
   serviceGroups: string[] = [];
   capIds: string[] = [];
   capTypes: string[] = [];
   serviceCodes: string[] = [];
 
+  constructor(
+    private searchCriteriaService: SearchCriteriaService,
+    private dialogRef: MatDialogRef<SearchCriteriaDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogData,
+    private fb: FormBuilder
+  ) {
+    this.searchForm = this.createSearchForm(data.searchConfig);
+  }
+
   ngOnInit() {
-    this.initForm();
     this.loadSearchCriteria();
   }
 
-  private initForm() {
-    this.searchForm = this.fb.group({
-      serviceGroup: [''],
-      capId: [''],
-      capType: [''],
-      serviceCode: [''],
-      beginDate: [null],
-      endDate: [null],
-      active: [''],
-      history: [false]
+  public getFieldOptions(fieldName: string): string[] {
+    switch (fieldName) {
+      case 'serviceGroup': return this.serviceGroups;
+      case 'capId': return this.capIds;
+      case 'capType': return this.capTypes;
+      case 'serviceCode': return this.serviceCodes;
+      default: return [];
+    }
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  onSearch(): void {
+    if (this.searchForm.valid) {
+      this.dialogRef.close({ type: 'search', data: this.searchForm.value });
+    }
+  }
+
+  onFinish(): void {
+    if (this.searchForm.valid) {
+      this.dialogRef.close({ type: 'finish', data: this.searchForm.value });
+    }
+  }
+
+  private createSearchForm(config: TableSearchConfig): FormGroup {
+    const group: Record<string, any> = {};
+    config.fields.forEach(field => {
+      group[field.field] = [field.defaultValue || null];
     });
+    return this.fb.group(group);
   }
 
   private loadSearchCriteria() {
@@ -134,25 +129,5 @@ export class SearchCriteriaDialogComponent implements OnInit {
         this.capTypes = criteria.capTypes;
         this.serviceCodes = criteria.serviceCodes;
       });
-  }
-
-  onCancel() {
-    this.dialogRef.close();
-  }
-
-  onSearch() {
-    if (this.searchForm.valid) {
-      this.dialogRef.close(this.searchForm.value);
-    }
-  }
-
-  onFinish() {
-    if (this.searchForm.valid) {
-      const searchRequest = {
-        tableName: 'SSAS_CAP_THRESHOLD_CEILING',
-        criteria: this.searchForm.value
-      };
-      this.dialogRef.close({ type: 'finish', data: searchRequest });
-    }
   }
 }

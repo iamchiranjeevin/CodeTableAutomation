@@ -1,7 +1,7 @@
 export const environment = {
-  production: false,
+  production: true,
   useMockData: false,
   apiBaseUrl: 'http://168.60.227.116:8080',
-  host: 'localhost',
-  port: 4200
-};
+  host: 'production-host',
+  port: 80
+}; 

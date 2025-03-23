@@ -31,7 +31,7 @@ import { SnakeCaseToStringPipe } from '../shared/pipes/snake-case-to-string.pipe
 import { MatPaginator } from '@angular/material/paginator';
 import { MatDivider } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getApiTableName, getDisplayTableName, propsToSet } from './shared/utils';
+import { getApiTableName, getDisplayTableName } from './shared/utils';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { DynamicDetailsComponent } from './dynamic-details/dynamic-details.component';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
@@ -41,7 +41,16 @@ import { ExportDialogComponent } from './shared/export-dialog.component';
 import { CommonModule } from '@angular/common';
 import { SearchCriteriaDialogComponent } from './components/search-criteria-dialog/search-criteria-dialog.component';
 import { SearchCriteriaService } from './services/search-criteria.service';
+import { TableConfigService } from './services/table-config.service';
+import { TableContextMenuComponent } from './components/table-context-menu/table-context-menu.component';
+import { DataTransformationService } from './services/data-transformation.service';
 
+// Helper function to extract all property keys from an array of objects
+function propsToSet(arr: any[], set: Set<string>) {
+  arr.forEach(obj => {
+    Object.keys(obj).forEach(key => set.add(key));
+  });
+}
 
 @Component({
   selector: 'app-production-tables',
@@ -65,7 +74,8 @@ import { SearchCriteriaService } from './services/search-criteria.service';
     MatSortHeader,
     DynamicDetailsComponent,
     MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    TableContextMenuComponent
   ],
   templateUrl: './production-tables.component.html',
   styleUrl: './production-tables.component.scss',
@@ -75,11 +85,15 @@ import { SearchCriteriaService } from './services/search-criteria.service';
 export class ProductionTablesComponent implements AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('contextMenu') contextMenu!: TableContextMenuComponent;
   @HostBinding('class') className = 'h-full';
   tableName = signal('');
   dataSource: MatTableDataSource<ProductionTableData>;
   totalRows: number = 0;
   private cdr = inject(ChangeDetectorRef);
+  
+  columnNameMapping: Record<string, string> = {};
 
   protected displayedColumns = signal<string[]>([]);
   protected columnsToDisplay = signal<string[]>([]);
@@ -89,34 +103,37 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.#productionTablesStore.getDynamicDetails();
   readonly #route = inject(ActivatedRoute);
   readonly #destroyRef = inject(DestroyRef);
-  hiddenColumns = new Set<string>(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
-    'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']);
-  columnNameMapping: Record<string, string> = {
-    "SERVICE_GRP": "SERVICE_GROUP",
-    "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD",
-    "SERVICE_LOWER_LIMIT": "RANGE_LOWER_LIMIT",
-    "SERVICE_UPPER_LIMIT": "RANGE_UPPER_LIMIT"
-  };    
+  hiddenColumns = new Set<string>([]);
+  apiConnectionError = false;
 
-  constructor(public dialog: MatDialog, private searchCriteriaService: SearchCriteriaService) {    
+  constructor(
+    public dialog: MatDialog,
+    private tableConfig: TableConfigService,
+    private searchCriteriaService: SearchCriteriaService,
+    private dataTransformation: DataTransformationService
+  ) {    
     this.#route.params.subscribe(params => {     
       const name = params['name']; 
       if (name) {
         // Clear dynamic details before loading new table
         this.#productionTablesStore.updateDynamicDetails(null);
-        const apiTableName = getApiTableName(name);
+        const apiTableName = this.tableConfig.getApiName(name);
         this.#productionTablesStore.loadProductionTables(apiTableName);
       }
     });
+    
     effect(() => {
       const tableData = this.#productionTablesStore.getTableDetails();
       if (tableData) {
-        this.dataSource.data = tableData;
-        this.totalRows = tableData.length;
-        if (tableData.length > 0) {
-          const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
-          this.updateTableDetails(tableData, apiTableName);
-        }
+        const apiTableName = this.tableConfig.getApiName(this.#route.snapshot.params['name']);
+        
+        // Transform API data to display format
+        const transformedData = this.dataTransformation.transformApiToDisplay(
+          apiTableName, 
+          tableData
+        );
+        
+        this.updateTableDetails(transformedData, apiTableName);
       }
     });
 
@@ -129,6 +146,9 @@ export class ProductionTablesComponent implements AfterViewInit {
     });
 
     this.dataSource = new MatTableDataSource(this.data());
+
+    // Add this to the constructor or a lifecycle hook
+    this.setupApiErrorHandling();
   }
 
   ngAfterViewInit() {
@@ -144,7 +164,7 @@ export class ProductionTablesComponent implements AfterViewInit {
       }
     });
 
-    const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
+    const apiTableName = this.tableConfig.getApiName(this.#route.snapshot.params['name']);
     if (apiTableName) {
       this.#productionTablesStore.loadProductionTables(apiTableName);
     }
@@ -181,7 +201,7 @@ export class ProductionTablesComponent implements AfterViewInit {
       return;
     }
 
-    const apiTableName = getApiTableName(tableName);
+    const apiTableName = this.tableConfig.getApiName(tableName);
     const tableRows = this.#productionTablesStore.getTableDetails();
     if (!tableRows) {
       return;
@@ -197,34 +217,35 @@ export class ProductionTablesComponent implements AfterViewInit {
     const keys = new Set<string>();
     propsToSet(tableRows, keys);
     
-    // Map the column names
+    // Get column mappings from the service instead of hardcoded mapping
+    const columnMappings = this.tableConfig.getColumnMappings(apiTableName);
+    
+    // Update the columnNameMapping property for use in the template
+    this.columnNameMapping = columnMappings;
+    
+    // Map the column names using the service
     const mappedKeys = Array.from(keys).map(key => {
-      const mappedName = this.columnNameMapping[key];
-      if (mappedName) {
-        // Update the actual data to use the mapped column name
+      const mappedName = columnMappings[key] || key;
+      
+      // Update the actual data to use the mapped column name
+      if (mappedName !== key) {
         tableRows.forEach((row: any) => {
           row[mappedName] = row[key];
           delete row[key];
         });
-        return mappedName;
       }
-      return key;
+      
+      return mappedName;
     });
     
     this.displayedColumns.set(mappedKeys);
-    const tableSpecificHiddenColumns: Record<string, Set<string>> = {
-      "SSAS_AUTH_AGENT_AND_HOLD": new Set(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
-        'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']), 
-      "SSAS_CAP_THRESHOLD_CEILING": new Set([
-        'PHASE', 'REC_ID', 'PHASE_TYPE', 'CREATE_DATE', 'CREATE_BY',
-        'UPDATE_DATE', 'UPDATE_BY', 'STATUS'
-      ])
-    };
     
-    this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
+    // Use the table config service to get hidden columns
+    this.hiddenColumns = new Set(this.tableConfig.getHiddenColumns(apiTableName));
+    
     this.columnsToDisplay.set(mappedKeys.filter(column => !this.hiddenColumns.has(column)));
     
-    const displayTableName = getDisplayTableName(apiTableName);
+    const displayTableName = this.tableConfig.getDisplayName(apiTableName);
     this.tableName.set(`${displayTableName} PRODUCTION VIEW`);
     this.data.set(tableRows);
     this.dataSource.data = tableRows;
@@ -281,28 +302,118 @@ exportToCSV(selectedRows: any[]) {
 
 onTableRightClick(event: MouseEvent, tableName: string) {
   event.preventDefault();
+  const config = this.tableConfig.getConfig(tableName);
   
-  if (tableName === 'CAP- CAP_ THRESHOLD') {
-    const dialogRef = this.dialog.open(SearchCriteriaDialogComponent, {
-      width: '600px'
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.type === 'finish') {
-        this.searchCriteriaService.searchTable(result.data)
-          .subscribe({
-            next: (searchResults) => {
-              // Update table with search results
-              this.updateTableDetails(searchResults, 'SSAS_CAP_THRESHOLD_CEILING');
-            },
-            error: (error) => {
-              console.error('Search failed:', error);
-              // TODO: Add error handling
-            }
-          });
-      }
-    });
+  if (config?.searchConfig?.enabled) {
+    // Position and show context menu
+    this.contextMenu.x = event.clientX;
+    this.contextMenu.y = event.clientY;
+    
+    // Open the search dialog when menu item is clicked
+    this.contextMenu.onSearch = () => {
+      this.openSearchDialog(tableName);
+    };
   }
+}
+
+private openSearchDialog(tableName: string) {
+  const config = this.tableConfig.getSearchConfig(tableName);
+  if (!config) return;
+  
+  const dialogRef = this.dialog.open(SearchCriteriaDialogComponent, {
+    width: '600px',
+    data: { searchConfig: config }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result?.type === 'finish') {
+      const apiTableName = this.tableConfig.getApiName(tableName);
+      this.handleSearch(result.data, apiTableName);
+    }
+  });
+}
+
+private handleSearch(searchData: any, tableName: string) {
+  // Prepare search data based on table type
+  const preparedSearchData = this.prepareSearchData(searchData, tableName);
+  
+  console.log(`Sending search request for ${tableName}:`, preparedSearchData);
+  
+  this.searchCriteriaService.searchTable({
+    tableName,
+    criteria: preparedSearchData
+  }).subscribe({
+    next: (searchResults) => {
+      console.log(`${tableName} search results:`, searchResults);
+      const transformedData = this.dataTransformation.transformApiToDisplay(
+        tableName, 
+        searchResults
+      );
+      this.updateTableDetails(transformedData, tableName);
+    },
+    error: (error) => {
+      console.error(`${tableName} search failed:`, error);
+      this.handleApiError(error);
+    }
+  });
+}
+
+// Extract table-specific search data preparation to a separate method
+private prepareSearchData(searchData: any, tableName: string): any {
+  if (tableName === 'SSAS_CAP_THRESHOLD_CEILING') {
+    return {
+      ...searchData,
+      SERVICE_GROUP: searchData.SERVICE_GROUP || '',
+      CAP_ID: searchData.CAP_ID || '',
+      CAP_TYPE: searchData.CAP_TYPE || '',
+      SERVICE_CD: searchData.SERVICE_CD || '',
+      BEGIN_DATE: searchData.BEGIN_DATE || null,
+      END_DATE: searchData.END_DATE || null,
+      ACTIVE: searchData.ACTIVE || null,
+      HISTORY: searchData.HISTORY || ''
+    };
+  }
+  
+  // Default case for other tables
+  return searchData;
+}
+
+// Setup API error handling in a more robust way
+private setupApiErrorHandling() {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled Promise Rejection:', event.reason);
+    
+    if (event.reason?.status === 0) {
+      this.apiConnectionError = true;
+      this.cdr.detectChanges();
+      
+      // Reset after 10 seconds
+      setTimeout(() => {
+        this.apiConnectionError = false;
+        this.cdr.detectChanges();
+      }, 10000);
+    }
+  });
+}
+
+// Improved error handling
+private handleApiError(error: any) {
+  console.error('API Error:', error);
+  this.apiConnectionError = error.status === 0;
+  this.cdr.detectChanges();
+  
+  // Reset after 10 seconds
+  if (this.apiConnectionError) {
+    setTimeout(() => {
+      this.apiConnectionError = false;
+      this.cdr.detectChanges();
+    }, 10000);
+  }
+}
+
+// Add trackBy function for better performance with ngFor
+trackByFn(index: number, item: ProductionTableData): any {
+  return item['ID'] || index;
 }
 
 }

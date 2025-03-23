@@ -9,7 +9,7 @@
   <mat-divider class="w-full"></mat-divider>
 
   <div id="productionTable" class="overflow-x-auto max-w-full w-full grow prodtbldiv" #productionTable>    
-    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+    <table mat-table [dataSource]="dataSource" matSort (contextmenu)="onTableRightClick($event, tableName())" class="mat-elevation-z8">
       
       <!-- Dynamic Column Definitions -->
       <ng-container *ngFor="let column of columnsToDisplay()" [matColumnDef]="column">
@@ -43,3 +43,10 @@
 @if (dynamicDetails()) {
   <app-dynamic-details />
 }
+
+<app-table-context-menu #contextMenu></app-table-context-menu>
+
+<!-- Add this somewhere in your template -->
+<div *ngIf="apiConnectionError" class="api-error-banner">
+  API Connection Error. Please check your network connection or contact support.
+</div>

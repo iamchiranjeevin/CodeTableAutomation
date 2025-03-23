@@ -8,8 +8,8 @@ export function propsToSet(rows: [], keys: Set<string>) {
 
 
 const TABLE_NAME_MAPPING: Record<string, string> = {
-  'SSAS_AUTH_AGENT_AND_HOLD': 'AAH-AUTH AGENT HOLD',
-  'SSAS_CAP_THRESHOLD_CEILING': 'CAP- CAP_ THRESHOLD' 
+  'SSAS_AUTH_AGENT_AND_HOLD': 'AAH - AUTH AGENT HOLD',
+  'SSAS_CAP_THRESHOLD_CEILING': 'CAP - CAP THRESHOLD' 
 };
 
 const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = Object.fromEntries(

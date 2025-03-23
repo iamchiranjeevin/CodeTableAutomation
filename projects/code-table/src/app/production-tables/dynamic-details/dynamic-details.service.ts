@@ -1,17 +1,17 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { delay, of, map, Observable } from 'rxjs';
-import { UpdateRequestBody } from '../shared/types';
+import { Observable } from 'rxjs';
+import { DynamicUpdateRequestBody } from '../shared/types';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
-
 export class DynamicDetailsService {
-    readonly #httpClient = inject(HttpClient);
-    private apiUrl = 'http://168.60.227.116:8080/productionTableUpdate';
+  private apiUrl = 'http://168.60.227.116:8080/productionTableDetails';
 
-    updateProductionTableRow(requestBody: UpdateRequestBody): Observable<any> {
-        return this.#httpClient.post(`${this.apiUrl}`, requestBody); 
-      }
+  constructor(private http: HttpClient) {}
+
+  updateData(request: DynamicUpdateRequestBody): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update`, request);
+  }
 }

@@ -1,31 +1,38 @@
 <mat-tree
   #tree
   [childrenAccessor]="childrenAccessor"
-  [dataSource]="dataSource()">
-  <!-- This is the tree node template for leaf nodes -->
+  [dataSource]="dataSource">
+  
+  <!-- Leaf Node (Menu Link) -->
   <mat-tree-node
     *matTreeNodeDef="let node"
-    class="menu-link"
     matTreeNodePadding
     routerLinkActive="active">
-    <!-- use a disabled button to provide padding for tree leaf -->
+    
     <button disabled mat-icon-button></button>
-    <a [routerLink]="node.path">{{ node.title }}</a>
+    <a [routerLink]="node.path" (contextmenu)="onRightClick($event, node)">
+      {{ node.title }}
+    </a>
   </mat-tree-node>
-  <!-- This is the tree node template for expandable nodes -->
+
+  <!-- Expandable Node -->
   <mat-tree-node
     *matTreeNodeDef="let node; when: hasChild"
-    [cdkTreeNodeTypeaheadLabel]="node.title"
     matTreeNodePadding
     matTreeNodeToggle>
-    <button
-      [attr.aria-label]="'Toggle ' + node.title"
-      mat-icon-button
-      matTreeNodeToggle>
-      <mat-icon class="mat-icon-rtl-mirror">
-        {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-      </mat-icon>
+    
+    <button mat-icon-button matTreeNodeToggle>
+      <mat-icon>{{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}</mat-icon>
     </button>
     {{ node.title }}
   </mat-tree-node>
 </mat-tree>
+
+<!-- Custom Context Menu -->
+<div
+  class="context-menu"
+  *ngIf="contextMenuVisible"
+  [ngStyle]="{'top.px': menuY, 'left.px': menuX}"
+  (mouseleave)="closeContextMenu()">
+  <button (click)="openDialog()">Open {{ selectedTableName }}</button>
+</div>

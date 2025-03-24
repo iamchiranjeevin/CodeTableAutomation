@@ -1,48 +1,61 @@
-import { Component, inject } from '@angular/core';
-import {
-  MatTree,
-  MatTreeNode,
-  MatTreeNodeDef,
-  MatTreeNodePadding,
-  MatTreeNodeToggle,
-} from '@angular/material/tree';
-import { MatIcon } from '@angular/material/icon';
-import { MatIconButton } from '@angular/material/button';
+import { Component, HostListener, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { AppStore } from '../../app.store';
 import { MenuLink } from '../shared/types';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { MatTreeModule } from '@angular/material/tree';
+import { RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-side-nav',
-  imports: [
-    MatTree,
-    MatTreeNode,
-    MatIcon,
-    MatTreeNodeDef,
-    MatTreeNodePadding,
-    MatIconButton,
-    MatTreeNodeToggle,
-    RouterLink,
-    RouterLinkActive,
-  ],
+  standalone: true,
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.scss',
+  imports: [
+    CommonModule,    
+    MatTreeModule,
+    RouterModule,
+    MatIconModule
+  ]
 })
 export class SideNavComponent {
   readonly #appStore = inject(AppStore);
-  dataSource = this.#appStore.menuLinks();
+  
+  // Convert Signal<MenuLink[]> to plain array
+  dataSource: Observable<MenuLink[]> = toObservable(this.#appStore.menuLinks).pipe(
+    map(signal => signal()) // Extracts the actual array from the signal
+  );
 
+  // Function to access children of a node
   childrenAccessor = (node: MenuLink) => node.children ?? [];
 
-  hasChild = (_: number, node: MenuLink) =>
-    !!node.children && node.children.length > 0;
-}
+  // Check if a node has children
+  hasChild = (_: number, node: MenuLink) => !!node.children && node.children.length > 0;
 
-/**
- * Food data with nested structure.
- * Each node has a name and an optional list of children.
- */
-interface FoodNode {
-  name: string;
-  children?: FoodNode[];
+  // Context menu properties
+  contextMenuVisible = false;
+  menuX = 0;
+  menuY = 0;
+  selectedTableName = '';
+
+  onRightClick(event: MouseEvent, node: MenuLink) {
+    event.preventDefault(); // Prevent default browser right-click menu
+
+    this.selectedTableName = node.title;
+    this.menuX = event.clientX;
+    this.menuY = event.clientY;
+    this.contextMenuVisible = true;
+  }
+
+  closeContextMenu() {
+    this.contextMenuVisible = false;
+  }
+
+  openDialog() {
+    alert(`Opening ${this.selectedTableName}`);
+    this.closeContextMenu();
+  }
 }

@@ -7,19 +7,19 @@
       <mat-form-field *ngIf="control.type === 'dropdown'" appearance="outline" class="full-width">
         <mat-label>{{ control.label }}</mat-label>
         <mat-select [formControlName]="control.controlName">
-          <mat-option *ngFor="let option of control.options" [value]="option[control.valueKey]">
-            {{ option[control.labelKey] || option[control.valueKey] }}
+          <mat-option *ngFor="let option of control.options" [value]="option[control.valueKey]">            
+            {{ control.isServiceGroup ? (option[control.valueKey] + ' - ' + option[control.labelKey]) : (option[control.labelKey] || option[control.valueKey]) }}
           </mat-option>
         </mat-select>
       </mat-form-field>
    
       <mat-form-field *ngIf="control.type === 'date'" appearance="outline" class="full-width">
         <mat-label>{{ control.label }}</mat-label>
-        <input matInput [matDatepicker]="picker" [formControlName]="control.controlName">
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker (closed)="formatDate(control.controlName)"></mat-datepicker>
+        <input matInput [matDatepicker]="datePickersMap[control.controlName]" [formControlName]="control.controlName">
+        <mat-datepicker-toggle matSuffix [for]="datePickersMap[control.controlName]"></mat-datepicker-toggle>
+        <mat-datepicker #{{control.controlName}}></mat-datepicker>
       </mat-form-field>
-    
+      
       <mat-checkbox *ngIf="control.type === 'checkbox'" [formControlName]="control.controlName">
         {{ control.label }}
       </mat-checkbox>

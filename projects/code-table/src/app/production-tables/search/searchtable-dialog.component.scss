@@ -26,3 +26,22 @@
     padding-bottom: 0 !important;
   }
 }
+
+::ng-deep .mat-select-value {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px; /* Ensures spacing without a divider */
+  white-space: nowrap; /* Prevents text wrapping */
+  border: none !important; /* Removes any unexpected border */
+}
+
+::ng-deep .mat-option {
+  display: flex !important;
+  align-items: center !important;
+}
+
+::ng-deep .mat-select-trigger {
+  display: flex !important;
+  align-items: center !important;
+}
+

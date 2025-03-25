@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SearchTableService } from './searchtable.service';
@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { CommonModule } from '@angular/common';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { formatDate } from '@angular/common';
 
@@ -33,8 +33,10 @@ import { formatDate } from '@angular/common';
 })
 export class SearchTableDialogComponent implements OnInit {
   form!: FormGroup;
-
   dynamicControls: any[] = []; 
+
+  @ViewChildren(MatDatepicker) datePickers!: QueryList<MatDatepicker<any>>;
+  datePickersMap: { [key: string]: MatDatepicker<any> } = {};
 
   constructor(
     private fb: FormBuilder,
@@ -50,7 +52,14 @@ export class SearchTableDialogComponent implements OnInit {
       this.createDynamicForm(response);
     });
   }
-
+  ngAfterViewInit(): void {    
+    this.datePickers.forEach((picker) => {
+      const controlName = this.dynamicControls.find(c => c.type === 'date' && !this.datePickersMap[c.controlName])?.controlName;
+      if (controlName) {
+        this.datePickersMap[controlName] = picker; 
+      }
+    });
+  }
   createDynamicForm(response: any): void {
     this.dynamicControls = []; 
 
@@ -74,14 +83,26 @@ export class SearchTableDialogComponent implements OnInit {
     // Add static fields
     this.addDatePicker('beginDate', 'Begin Date');
     this.addDatePicker('endDate', 'End Date');
-    this.addDropdown('active', 'Active', [{ value: 'A', label: 'Active' }, { value: 'C', label: 'Closed' }]);
+    this.addDropdown('active', 'Active', [{ value: 'A', label: 'A' }, { value: 'C', label: 'C' }]);
     this.addCheckbox('history', 'History');
   }
 
   
   addDropdown(controlName: string, label: string, options: any[], valueKey: string = 'value', labelKey: string = 'label') {
-    this.dynamicControls.push({ type: 'dropdown', controlName, label, options, valueKey, labelKey });
-    this.form.addControl(controlName, this.fb.control(''));
+    const serviceGroupControls = ['serviceGroup', 'serviceCode'];
+    const isServiceGroup = serviceGroupControls.includes(controlName);
+
+    this.dynamicControls.push({
+    type: 'dropdown',
+    controlName,
+    label,
+    options,
+    valueKey,
+    labelKey,
+    isServiceGroup 
+  });
+
+  this.form.addControl(controlName, this.fb.control(''));
   }
 
   
@@ -109,7 +130,7 @@ export class SearchTableDialogComponent implements OnInit {
     const dateValue = this.form.get(controlName)?.value;
     if (dateValue) {
       const formattedDate = formatDate(dateValue, 'MM/dd/yyyy', 'en-US');
-      this.form.get(controlName)?.setValue(formattedDate);
+      this.form.patchValue({ [controlName]: formattedDate });
     }
   }
   

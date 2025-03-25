@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { map, Observable } from 'rxjs';
+import { SearchTableDialogComponent } from '../../production-tables/search/searchtable-dialog.component';
 
 @Component({
   selector: 'app-side-nav',
@@ -23,6 +24,7 @@ import { map, Observable } from 'rxjs';
 })
 export class SideNavComponent {
   readonly #appStore = inject(AppStore);
+  private dialog = inject(MatDialog);
   
   // Convert Signal<MenuLink[]> to plain array
   dataSource: Observable<MenuLink[]> = toObservable(this.#appStore.menuLinks).pipe(
@@ -55,7 +57,14 @@ export class SideNavComponent {
   }
 
   openDialog() {
-    alert(`Opening ${this.selectedTableName}`);
+    alert(`Opening ${this.selectedTableName}`); //test alert    
+
+    this.dialog.open(SearchTableDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      data: { tableName: this.selectedTableName }
+    });
+
     this.closeContextMenu();
   }
 }

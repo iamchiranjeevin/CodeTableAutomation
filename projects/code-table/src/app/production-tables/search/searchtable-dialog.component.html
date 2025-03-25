@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>CAP - SEARCH CAP THRESHOLD CEILING</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <div *ngFor="let control of dynamicControls">
+      
+      <mat-form-field *ngIf="control.type === 'dropdown'" appearance="outline" class="full-width">
+        <mat-label>{{ control.label }}</mat-label>
+        <mat-select [formControlName]="control.controlName">
+          <mat-option *ngFor="let option of control.options" [value]="option[control.valueKey]">
+            {{ option[control.labelKey] || option[control.valueKey] }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+   
+      <mat-form-field *ngIf="control.type === 'date'" appearance="outline" class="full-width">
+        <mat-label>{{ control.label }}</mat-label>
+        <input matInput [matDatepicker]="picker" [formControlName]="control.controlName">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker (closed)="formatDate(control.controlName)"></mat-datepicker>
+      </mat-form-field>
+    
+      <mat-checkbox *ngIf="control.type === 'checkbox'" [formControlName]="control.controlName">
+        {{ control.label }}
+      </mat-checkbox>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-button color="primary" (click)="finish()">Finish</button>
+</mat-dialog-actions>

@@ -72,6 +72,9 @@ export const ProductionTablesStore = signalStore(
         ),
       });
     },
+    updateProdRows(tblRows: any[]){
+      patchState(store, { data: tblRows });
+    },
     getDynamicDetails() {
       return store._dynamicDetails;
     }

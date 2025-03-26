@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, inject, Inject, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SearchTableService } from './searchtable.service';
@@ -12,6 +12,8 @@ import { CommonModule } from '@angular/common';
 import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { formatDate } from '@angular/common';
+import { ProductionTablesStore } from '../production-tables.store';
+import { getApiTableName } from '../shared/utils';
 
 @Component({
   selector: 'app-dynamic-search-dialog',
@@ -37,6 +39,7 @@ export class SearchTableDialogComponent implements OnInit {
 
   @ViewChildren(MatDatepicker) datePickers!: QueryList<MatDatepicker<any>>;
   datePickersMap: { [key: string]: MatDatepicker<any> } = {};
+  readonly #productionTablesStore = inject(ProductionTablesStore);
 
   constructor(
     private fb: FormBuilder,
@@ -119,7 +122,39 @@ export class SearchTableDialogComponent implements OnInit {
 
   finish(): void {
     console.log(this.form.value);
-    this.dialogRef.close(this.form.value);
+    const formValues = this.form.value;
+
+    const requestBody = {
+      tableName: this.data.tableName || "",
+      row: {
+        SERVICE_GROUP: formValues.serviceGroup || "",
+        CAP_ID: formValues.capId || "",
+        CAP_TYPE: formValues.capType || "",
+        SERVICE_CD: formValues.serviceCode || "",
+        BEGIN_DATE: formValues.beginDate ? formValues.beginDate.toISOString() : null,
+        END_DATE: formValues.endDate ? formValues.endDate.toISOString() : null,
+        ACTIVE: formValues.active || null,
+        HISTORY: formValues.history ? "Enabled" : "Disabled" 
+      }
+    };
+
+    this.tableService.getProductionTableData(requestBody.tableName, requestBody.row).subscribe({
+      next: (response) => {
+        console.log('API Response:', response);
+        if (response) {        
+        this.#productionTablesStore.updateProdRows(response);        
+        const apiTableName = getApiTableName(requestBody.tableName);
+        this.#productionTablesStore.loadProductionTables(apiTableName);
+        this.dialogRef.close(this.form.value);
+        } else {          
+          console.error('Update failed:', response);
+                            }
+                          },
+                          error: (error) => {
+                            console.error("Error updating data:", error);                            
+                          }
+    });
+    console.log('Close API Response:');    
   }
 
   cancel(): void {

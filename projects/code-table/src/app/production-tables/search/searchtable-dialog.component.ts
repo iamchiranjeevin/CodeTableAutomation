@@ -40,6 +40,7 @@ export class SearchTableDialogComponent implements OnInit {
   @ViewChildren(MatDatepicker) datePickers!: QueryList<MatDatepicker<any>>;
   datePickersMap: { [key: string]: MatDatepicker<any> } = {};
   readonly #productionTablesStore = inject(ProductionTablesStore);
+  apiTableName: string | undefined;
 
   constructor(
     private fb: FormBuilder,
@@ -50,6 +51,7 @@ export class SearchTableDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({}); 
+    this.apiTableName = getApiTableName(this.data.tableName);
 
     this.tableService.getTableSearchCriteria(this.data.tableName).subscribe((response) => {
       this.createDynamicForm(response);
@@ -71,23 +73,50 @@ export class SearchTableDialogComponent implements OnInit {
       this.addDropdown('serviceGroup', 'Service Group', response.serviceGroups, 'SERVICE_GROUP', 'DESCRIPTION');
     }
 
-    if (response.capIds) {
-      this.addDropdown('capId', 'CAP ID', response.capIds, 'CAP_ID');
+    // Add table-specific fields in the correct order
+    if (this.apiTableName === 'SSAS_CAP_THRESHOLD_CEILING') {
+      if (response.capIds) {
+        this.addDropdown('capId', 'CAP ID', response.capIds, 'CAP_ID');
+      }
+  
+      if (response.capTypes) {
+        this.addDropdown('capType', 'CAP Type', response.capTypes, 'CODE', 'DESCRIPTION');
+      }
+  
+      if (response.serviceCodes) {
+        this.addDropdown('serviceCode', 'Service Code', response.serviceCodes, 'SERVICE_CD', 'DESCRIPTION');
+      }
+  
+      // Add static fields
+      this.addDatePicker('beginDate', 'Begin Date');
+      this.addDatePicker('endDate', 'End Date');
+      this.addDropdown('active', 'Active', [{ value: 'A', label: 'A' }, { value: 'C', label: 'C' }]);
+      this.addCheckbox('history', 'History');
     }
 
-    if (response.capTypes) {
-      this.addDropdown('capType', 'CAP Type', response.capTypes, 'CODE', 'DESCRIPTION');
+    else if (this.apiTableName === 'SSAS_AUTH_AGENT_AND_HOLD') {
+      // Add AAH-specific fields in the exact order specified
+      // First add Auth Agent Type if available (from API)
+      if (response.authAgentTypes) {
+        this.addDropdown('authAgentType', 'Auth Agent Type', response.authAgentTypes, 'CODE',
+ 'DESCRIPTION');
+      }
+      // Then add fields in the specified order:
+      // HOLD BEGIN DATE, HOLD END DATE, ACTIVE, PROGRAM ON HOLD, HISTORY, CONTRACT CAP CHECK
+      this.addDatePicker('holdBeginDate', 'Hold Begin Date');
+      this.addDatePicker('holdEndDate', 'Hold End Date');
+      this.addDropdown('active', 'Active', [{ value: 'A', label: 'A' }, { value: 'C', label: 'C' }]);
+      this.addDropdown('programOnHold', 'Program On Hold', [
+        { value: 'Y', label: 'Y' },
+        { value: 'N', label: 'N' }
+      ]);
+      this.addCheckbox('history', 'History');
+      this.addDropdown('contractCapCheck', 'Contract Cap Check', [
+        { value: 'Y', label: 'Y' },
+        { value: 'N', label: 'N' }
+      ]);
     }
-
-    if (response.serviceCodes) {
-      this.addDropdown('serviceCode', 'Service Code', response.serviceCodes, 'SERVICE_CD', 'DESCRIPTION');
-    }
-
-    // Add static fields
-    this.addDatePicker('beginDate', 'Begin Date');
-    this.addDatePicker('endDate', 'End Date');
-    this.addDropdown('active', 'Active', [{ value: 'A', label: 'A' }, { value: 'C', label: 'C' }]);
-    this.addCheckbox('history', 'History');
+    
   }
 
   

@@ -53,7 +53,7 @@ export class SearchTableDialogComponent implements OnInit {
     this.form = this.fb.group({}); 
     this.apiTableName = getApiTableName(this.data.tableName);
 
-    this.tableService.getTableSearchCriteria(this.data.tableName).subscribe((response) => {
+    this.tableService.getTableSearchCriteria(this.apiTableName).subscribe((response) => {
       this.createDynamicForm(response);
     });
   }

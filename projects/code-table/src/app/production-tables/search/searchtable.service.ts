@@ -7,7 +7,7 @@ import { map, Observable, of } from 'rxjs';
 })
 export class SearchTableService {
   private API_URL = 'http://168.60.227.116:8080/productionTableSearchCriteria';
-  private FINISHAPI_URL = 'http://168.60.227.116:8080/productionTableSearchResults';
+  private TableSearchResultsAPI_URL = 'http://168.60.227.116:8080/productionTableSearchResults';
 
   constructor(private http: HttpClient) {}
 
@@ -23,7 +23,7 @@ export class SearchTableService {
     };
 
     return this.http
-        .post<{ rows: any[] }>(`${this.FINISHAPI_URL}`, requestBody)
+        .post<{ rows: any[] }>(`${this.TableSearchResultsAPI_URL}`, requestBody)
         .pipe(map(response => response.rows || [])); 
   }
 }

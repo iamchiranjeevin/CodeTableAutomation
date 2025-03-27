@@ -56,8 +56,8 @@ export class SideNavComponent {
     this.contextMenuVisible = false;
   }
 
-  openDialog() {
-    alert(`Opening ${this.selectedTableName}`); //test alert    
+  openDialog() {    
+    console.log(`Opening ${this.selectedTableName}`);  
 
     this.dialog.open(SearchTableDialogComponent, {
       width: '600px',

@@ -142,9 +142,7 @@ export class SearchTableDialogComponent implements OnInit {
       next: (response) => {
         console.log('API Response:', response);
         if (response) {        
-        this.#productionTablesStore.updateProdRows(response);        
-        const apiTableName = getApiTableName(requestBody.tableName);
-        this.#productionTablesStore.loadProductionTables(apiTableName);
+        this.#productionTablesStore.updateProdRows(response); 
         this.dialogRef.close(this.form.value);
         } else {          
           console.error('Update failed:', response);

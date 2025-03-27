@@ -74,6 +74,7 @@ export const ProductionTablesStore = signalStore(
     },
     updateProdRows(tblRows: any[]){
       patchState(store, { data: tblRows });
+      patchState(store, { _dynamicDetails: null });
     },
     getDynamicDetails() {
       return store._dynamicDetails;

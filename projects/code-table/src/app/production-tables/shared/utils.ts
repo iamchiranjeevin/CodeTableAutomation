@@ -1,0 +1,64 @@
+import { ProductionTable } from './types';
+
+export function propsToSet(rows: [], keys: Set<string>) { 
+  rows.forEach((row) => {   
+    Object.keys(row).forEach(key => keys.add(key));
+  });
+}
+
+
+const TABLE_NAME_MAPPING: Record<string, string> = {
+  'MG1_SSAS_AUTH_AGENT_AND_HOLD': 'AAH-AUTH AGENT HOLD',
+  'MG1_SSAS_CAP_THRESHOLD_CEILING': 'CAP- CAP_ THRESHOLD',
+  'MG1_CF1': 'CF1-BILLING CODE',
+  'MG1_CFB': 'CFB- BILLING COMBINATION',
+  'MG1_CFI': 'CFI-ITEM CODE',
+  'MG1_CFM': 'CFM- ELIGIBILITY COMBINATION',
+  'MG1_CFP': 'CFP-PROCEDURE CODE',
+  'MG1_CFR': 'CFR-PROCEDURE CODE RATE',
+  'MG1_CLC': 'CLC-LVL OF SRVC GRP CROSS REF',
+  'MG1_CLS': 'CLS - LEVEL OF SERVICE',
+  'MG1_CMD': 'CMD - MODIFIER',
+  'MG1_CMR': 'CMR - MODIFIER CROSS REFERENCE',
+  'MG1_CNB': 'CNB-BILL CODE CROSSWALK',
+  'MG1_CNP': 'CNP - NATIONAL PROCEDURE CODES',
+  'MG1_CNC': 'CNS - CMS NATIONAL CODES',
+  'MG1_COV': 'COV - COVERAGE CODE',
+  'MG1_CPQ': 'CPQ - PROCEDURE CODE QUALIFIER',
+  'MG1_CPS': 'CPS - PLACE OF SERVICE',
+  'MG1_CPT': 'CPT - CLIENT PROGRAM TYPE',
+  'MG1_CRC': 'CRC- REVENUE CODES',
+  'MG1_CSG': 'CSG - SERVICE GROUP',
+  'MG1_CSI': 'CSI - SERVICE CODE ITEM REC',
+  'MG1_CSP': 'CSP - SERVICE CODE PROCEDURE',
+  'MG1_CSR': 'CSR - SERVICE CODE',
+  'MG1_CSS': 'CSS - SERVICE GRP SERVICE CD',
+  'MG1_DA2': 'DA2 - SERVICE AUTH EDITS',
+  'MG1_DA3': 'DA3 - NE SERV EDITS',
+  'MG1_DAD': 'DAD - REFERENCE CODES',
+  'MG1_DCE': 'DCE - TMHP DUPLICATE CLAIM EDIT',
+  'MG1_SSAS_DIAGNOSIS': 'DIA - DIAGNOSIS',
+  'MG1_ECC': 'ECC - ELIGIBILITY CATEGORY',
+  'MG1_FCD': 'FCD - FUND CODE',
+  'MG1_FSR': 'FSR - FISCAL ACCOUNT CODE',
+  'MG1_SSAS_SERVICE_RESI_LOCATION': 'LBR - SERVICE_RESI_LOCATION',
+  'MG1_LST': 'LST - LEVEL OF SERVICE TYPE',
+  'MG1_SSAS_MOVEMENT_SEQUENCES': 'MSQ - MOVEMENT_SEQUENCES',
+  'MG1_PME': 'PME - TMHP MUTEX',
+  'MG1_SSAS_REFERENCE_TABLE': 'REF - REFERENCE_TABLE',
+  'MG1_SGO': 'SGO - SRVC GRP SRVC OVERLAP'
+};
+
+const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = Object.fromEntries(
+  Object.entries(TABLE_NAME_MAPPING).map(([key, value]) => [value, key])
+);
+
+
+export function getDisplayTableName(apiTableName: string): string {
+  return TABLE_NAME_MAPPING[apiTableName] || apiTableName;
+};
+
+export function getApiTableName(displayTableName: string): string {
+  return REVERSE_TABLE_NAME_MAPPING[displayTableName] || displayTableName;
+};
+

@@ -163,7 +163,7 @@ export class SearchTableDialogComponent implements OnInit {
         BEGIN_DATE: formValues.beginDate ? formValues.beginDate.toISOString() : null,
         END_DATE: formValues.endDate ? formValues.endDate.toISOString() : null,
         ACTIVE: formValues.active || null,
-        HISTORY: formValues.history ? "Enabled" : "Disabled" 
+        HISTORY: formValues.history ? "true" : "false" 
       }
     };
 

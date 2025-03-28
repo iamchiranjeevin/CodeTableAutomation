@@ -50,8 +50,8 @@ export class SearchTableDialogComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.form = this.fb.group({}); 
-    this.apiTableName = getApiTableName(this.data.tableName);
+    this.form = this.fb.group({});
+    this.apiTableName = getApiTableName(this.data.tableName);    
 
     this.tableService.getTableSearchCriteria(this.apiTableName).subscribe((response) => {
       this.createDynamicForm(response);
@@ -151,10 +151,10 @@ export class SearchTableDialogComponent implements OnInit {
 
   finish(): void {
     console.log(this.form.value);
-    const formValues = this.form.value;
+    const formValues = this.form.value;    
 
     const requestBody = {
-      tableName: this.data.tableName || "",
+      tableName: this.apiTableName || "",
       row: {
         SERVICE_GROUP: formValues.serviceGroup || "",
         CAP_ID: formValues.capId || "",

@@ -39,6 +39,10 @@
 </mat-paginator>  
 </div>
 
+<div *ngIf="dataSource?.data?.length === 0" class="p-4 text-center">
+  No records
+</div>
+
 <!-- Details Component -->
 @if (dynamicDetails()) {
   <app-dynamic-details />

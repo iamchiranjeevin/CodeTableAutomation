@@ -1,0 +1,19 @@
+<mat-menu #childMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent>
+    @for (menu of menuLinks(); track menu.path) {
+      @if (menu.children) {
+        <button [matMenuTriggerFor]="child.childMenu()" mat-menu-item>
+          {{ menu.title }}
+        </button>
+        <app-header-toolbar-menu #child [menuLinks]="menu.children"/>
+      } @else {
+        <a
+          [routerLink]="menu.path"
+          mat-menu-item
+          [routerLinkActive]="'active'"
+        >{{ menu.title }}</a
+        >
+      }
+    }
+  </ng-template>
+</mat-menu>

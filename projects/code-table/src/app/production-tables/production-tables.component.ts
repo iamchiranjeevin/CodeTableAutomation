@@ -106,7 +106,7 @@ export class ProductionTablesComponent implements AfterViewInit {
       }
     });
     effect(() => {
-      const tableData = this.#productionTablesStore.getTableDetails();
+      const tableData = this.#productionTablesStore.getTableDetails();      
        if (tableData) {
          this.dataSource.data = tableData;
          this.totalRows = tableData.length;
@@ -114,7 +114,12 @@ export class ProductionTablesComponent implements AfterViewInit {
            const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
            this.updateTableDetails(tableData, apiTableName);
          }
-       }
+         else {
+          console.log('No records found.');
+          this.dataSource.data = []; 
+          this.totalRows = 0;
+        }
+       }      
      });
      // Add a separate effect for handling dynamic details
      effect(() => {

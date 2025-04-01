@@ -1,0 +1,45 @@
+<h2 mat-dialog-title class="dialog-title">Search {{ data.tableName | uppercase }}</h2>
+
+<mat-dialog-content class="search-dialog-content">
+  <!-- Show loading spinner when isLoading is true -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading search form...</p>
+  </div>
+
+  <!-- Show form when not loading -->
+  <form [formGroup]="form" *ngIf="!isLoading">
+    <div class="search-form-grid">
+      <ng-container *ngFor="let control of dynamicControls; let i = index">
+        
+        <mat-form-field *ngIf="control.type === 'dropdown'" appearance="outline" 
+                       [ngClass]="{'form-field': true, 'short-field': isShortField(control.controlName)}">
+          <mat-label>{{ control.label }}</mat-label>
+          <mat-select [formControlName]="control.controlName">
+            <mat-option *ngFor="let option of control.options" [value]="option[control.valueKey]">            
+              {{ control.isServiceGroup ? (option[control.valueKey] + ' - ' + option[control.labelKey]) : (option[control.labelKey] || option[control.valueKey]) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+     
+        <mat-form-field *ngIf="control.type === 'date'" appearance="outline" class="form-field">
+          <mat-label>{{ control.label }}</mat-label>
+          <input matInput [matDatepicker]="picker" [formControlName]="control.controlName">
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        
+        <div *ngIf="control.type === 'checkbox'" class="checkbox-container">
+          <mat-checkbox [formControlName]="control.controlName">
+            {{ control.label }}
+          </mat-checkbox>
+        </div>
+      </ng-container>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="finish()" [disabled]="isLoading">Search</button>
+</mat-dialog-actions>

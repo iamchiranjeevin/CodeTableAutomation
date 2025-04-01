@@ -1,0 +1,168 @@
+@use 'tailwindcss';
+@use '@angular/material' as mat;
+
+.dynamic-details-container {
+  padding: var(--common-padding-size);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.dynamic-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-fields-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-radius: var(--common-border-radius);
+  background-color: rgba(0, 0, 0, 0.02);
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.field-label {
+  flex: 0 0 30%;
+  font-weight: 500;
+  text-align: right;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.field-value {
+  flex: 0 0 65%;
+  
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 600px) {
+  .form-field-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .field-label {
+    flex: 0 0 100%;
+    text-align: left;
+    margin-bottom: 0.25rem;
+  }
+  
+  .field-value {
+    flex: 0 0 100%;
+  }
+}
+
+.dynamic-details-form {
+  @apply w-full flex-wrap flex flex-row justify-start items-start gap-6 p-6;
+
+  &-field {
+    @apply grow w-full sm:max-w-1/6;
+  }
+}
+
+.button-container {
+  @apply w-full flex justify-start mt-4;
+}
+
+.hidden-field {
+  display: none; 
+}
+
+.custom-button {
+  background-color: #9575CD !important; 
+  color: white !important;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer; 
+  transition: background-color 0.3s ease-in-out;
+}
+
+.custom-button:hover {
+  background-color: #7E57C2 !important; 
+  cursor: pointer;
+}
+
+.success-toast {
+  background-color: #4CAF50 !important; /* Green */
+  color: white !important;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.error-toast {
+  background-color: #F44336 !important; /* Red */
+  color: white !important;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.number-input-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  background: white;
+  width: 100%;
+}
+
+.number-input-container input {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.number-controls {
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.number-controls button {
+  width: 30px;
+  height: 22px;
+  min-width: 30px;
+  padding: 0;
+}
+
+.mat-icon {
+  font-size: 16px;
+}
+
+
+
+
+

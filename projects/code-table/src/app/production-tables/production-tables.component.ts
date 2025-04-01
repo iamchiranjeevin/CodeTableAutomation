@@ -101,17 +101,21 @@ export class ProductionTablesComponent implements AfterViewInit {
       if (name) {
         // Clear dynamic details before loading new table
         this.#productionTablesStore.updateDynamicDetails(null);
-        const apiTableName = getApiTableName(name);
+        const apiTableName = getApiTableName(name);        
+        this.#productionTablesStore.updateTableName(apiTableName || '');        
         this.#productionTablesStore.loadProductionTables(apiTableName);
       }
     });
-    effect(() => {
+    effect(() => {     
       const tableData = this.#productionTablesStore.getTableDetails();      
        if (tableData) {
          this.dataSource.data = tableData;
          this.totalRows = tableData.length;
          if (tableData.length > 0) {
-           const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
+          let apiTableName = this.#productionTablesStore.currentTableName();
+          if (!apiTableName) {
+            apiTableName = getApiTableName(this.#route.snapshot.params['name']);            
+          } 
            this.updateTableDetails(tableData, apiTableName);
          }
          else {
@@ -146,7 +150,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     });
 
     const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
-     if (apiTableName) {
+     if (apiTableName) {      
        this.#productionTablesStore.loadProductionTables(apiTableName);
      }
   }
@@ -175,23 +179,6 @@ export class ProductionTablesComponent implements AfterViewInit {
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
-  }
-
-  private loadTableData(params: Params) {
-    const tableName = params['name']; 
-    if (!tableName) {
-      return;
-    }
-
-    const apiTableName = getApiTableName(tableName);
-    const tableRows = this.#productionTablesStore.getTableDetails();
-    if (!tableRows) {
-      return;
-    }
-
-    this.totalRows = tableRows.length;
-    this.updateTableDetails(tableRows, apiTableName);
-    
   }
 
 

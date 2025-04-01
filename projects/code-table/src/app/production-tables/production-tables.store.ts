@@ -17,11 +17,13 @@ import { ProductionTable, ProductionTableData } from './shared/types';
 interface ProductionTablesStore {
   data: any | null;  
   _dynamicDetails: any | null;
+  currentTableName: string | null;
 }
 
 const initialState: ProductionTablesStore = {
   data: [],
   _dynamicDetails: null,
+  currentTableName: null
 };
 
 const availableProductionTables: ProductionTable[] = [
@@ -73,8 +75,11 @@ export const ProductionTablesStore = signalStore(
       });
     },
     updateProdRows(tblRows: any[]){
-      patchState(store, { data: tblRows });
+      patchState(store, { data: tblRows });      
       patchState(store, { _dynamicDetails: null });
+    },
+    updateTableName(tableName: string){
+      patchState(store, { currentTableName: tableName });
     },
     getDynamicDetails() {
       return store._dynamicDetails;

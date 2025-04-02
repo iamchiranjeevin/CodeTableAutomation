@@ -39,6 +39,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportDialogComponent } from './shared/export-dialog.component';
 import { CommonModule } from '@angular/common';
+import { NoDataDialogComponent } from './no-data-dialog.component';
 
 
 @Component({
@@ -120,6 +121,9 @@ export class ProductionTablesComponent implements AfterViewInit {
          }
          else {
           console.log('No records found.');
+          this.dialog.open(NoDataDialogComponent, {
+            width: '400px'
+          });
           this.dataSource.data = []; 
           this.totalRows = 0;
         }

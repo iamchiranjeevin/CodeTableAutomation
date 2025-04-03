@@ -1,47 +1,25 @@
-::ng-deep .mat-dialog-container {
-  width: 600px; 
-  max-width: 90vw; 
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.mat-form-field {
-  width: 100%; 
+.form-row {
+  display: flex;
+  align-items: center;
 }
 
-.mat-select-panel {
-  min-width: 300px !important; 
-  max-width: 100%;
-  white-space: nowrap; 
+.label-container {
+  flex: 1;
+  text-align: right;
+  padding-right: 10px;
+  font-weight: bold;
 }
 
-.mat-option {
-  overflow: visible !important;
-  text-overflow: ellipsis
+.field-container {
+  flex: 2;
 }
 
-::ng-deep mat-form-field {
-  .mat-form-field-underline {
-    display: none !important;
-  }
-  .mat-form-field-wrapper {
-    padding-bottom: 0 !important;
-  }
+.full-width {
+  width: 100%;
 }
-
-::ng-deep .mat-select-value {
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px; /* Ensures spacing without a divider */
-  white-space: nowrap; /* Prevents text wrapping */
-  border: none !important; /* Removes any unexpected border */
-}
-
-::ng-deep .mat-option {
-  display: flex !important;
-  align-items: center !important;
-}
-
-::ng-deep .mat-select-trigger {
-  display: flex !important;
-  align-items: center !important;
-}
-

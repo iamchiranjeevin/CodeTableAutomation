@@ -31,7 +31,7 @@ import { SnakeCaseToStringPipe } from '../shared/pipes/snake-case-to-string.pipe
 import { MatPaginator } from '@angular/material/paginator';
 import { MatDivider } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getApiTableName, getDisplayTableName, propsToSet } from './shared/utils';
+import { getApiTableName, getDisplayTableName, propsToSet, trimTableSuffix } from './shared/utils';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { DynamicDetailsComponent } from './dynamic-details/dynamic-details.component';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
@@ -40,6 +40,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ExportDialogComponent } from './shared/export-dialog.component';
 import { CommonModule } from '@angular/common';
 import { NoDataDialogComponent } from './no-data-dialog.component';
+import { SearchTableDialogComponent } from './search/searchtable-dialog.component';
 
 
 @Component({
@@ -267,6 +268,17 @@ exportToCSV(selectedRows: any[]) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+openDialog() {    
+  const apiTableName = trimTableSuffix(this.tableName());
+  console.log(`Opening ${apiTableName}`);  
+
+  this.dialog.open(SearchTableDialogComponent, {
+    width: '600px',
+    maxWidth: '90vw',
+    data: { tableName: apiTableName }
+  });
 }
 
 }

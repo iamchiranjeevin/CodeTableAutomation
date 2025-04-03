@@ -1,9 +1,14 @@
 <div class="w-full h-full max-w-full flex flex-col items-stretch justify-items-start">
   <div class="flex flex-row items-center justify-between p-3">
     <h2><strong>{{ tableName() }}</strong></h2>
+    <div class="flex gap-2">
+      <button mat-raised-button color="accent" (click)="openDialog()" class="cursor-pointer">
+        <mat-icon>search</mat-icon> Search
+      </button>
     <button mat-raised-button color="primary" (click)="openExportDialog()" class="cursor-pointer">
       <mat-icon>download</mat-icon> Export
-    </button>
+    </button>    
+  </div>
   </div>
 
   <mat-divider class="w-full"></mat-divider>

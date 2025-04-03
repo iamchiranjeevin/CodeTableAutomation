@@ -10,7 +10,7 @@
     routerLinkActive="active">
     
     <button disabled mat-icon-button></button>
-    <a [routerLink]="node.path" (contextmenu)="onRightClick($event, node)">
+    <a [routerLink]="node.path">
       {{ node.title }}
     </a>
   </mat-tree-node>

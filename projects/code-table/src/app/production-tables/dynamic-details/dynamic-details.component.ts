@@ -25,6 +25,7 @@ import { format, isValid } from 'date-fns';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { removePrefix } from '../shared/utils';
 
 
 const TABLE_NAME_API_MAPPING: Record<string, string> = {
@@ -211,6 +212,8 @@ export class DynamicDetailsComponent {
                     if (response && response.success) {
                       this.showSuccessToast("Production update successful!");
                       this.#productionTablesStore.updateDynamicDetails(null);
+                      const apiTableName = removePrefix(updateRequestBody.tableName);
+                      this.#productionTablesStore.loadProductionTables(apiTableName);
                       
                       const productionTable = document.getElementById('productionTable');
                       if (productionTable) {

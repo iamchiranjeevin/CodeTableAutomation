@@ -25,3 +25,7 @@ export function getApiTableName(displayTableName: string): string {
   return REVERSE_TABLE_NAME_MAPPING[displayTableName] || displayTableName;
 };
 
+export function removePrefix(tableName: string): string {
+  return tableName.replace(/^MG1_/, '');
+}
+

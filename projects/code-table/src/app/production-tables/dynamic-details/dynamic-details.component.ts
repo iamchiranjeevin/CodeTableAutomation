@@ -121,7 +121,11 @@ export class DynamicDetailsComponent {
     // Build form controls
     const formControls: { [key: string]: any } = {};
     this.columnKeys.forEach((key) => {
-      formControls[key] = [selectedRowDetails[key] ?? '']; 
+      if (key === 'ID') {
+        formControls[key] = [{ value: selectedRowDetails[key] ?? '', disabled: true }];
+      } else {
+        formControls[key] = [selectedRowDetails[key] ?? ''];
+      }
     });
 
     // Create new form instance

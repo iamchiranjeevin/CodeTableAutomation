@@ -10,7 +10,7 @@
         <!-- Left Partition -->
         <div class="dynamic-details-column">
           <ng-container *ngFor="let key of columnKeys; let i = index">
-            <ng-container *ngIf="key !== 'REC_ID' && i % 2 === 0">
+            <ng-container *ngIf="key !== 'ID' && key !== 'REC_ID' && i % 2 === 0">
               <div class="field-row">
                 <label class="field-label">{{ columnLabels?.[key] | uppercase }}</label>
                 <mat-form-field appearance="outline" class="field-input">
@@ -29,7 +29,7 @@
                     </div>
                   </ng-container>
                   <ng-template #normalInput>
-                    <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'REC_ID'; else textOrNumberInput">
+                    <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'ID' && key !== 'REC_ID'; else textOrNumberInput">
                       <input matInput [matDatepicker]="datePickerLeft" formControlName="{{ key }}" />
                       <mat-datepicker-toggle matSuffix [for]="datePickerLeft"></mat-datepicker-toggle>
                       <mat-datepicker #datePickerLeft></mat-datepicker>
@@ -66,7 +66,7 @@
                     </div>
                   </ng-container>
                   <ng-template #normalInput>
-                    <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'ID' && key !== 'REC_ID'; else textOrNumberInput">
+                    <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'ID' && key !== 'ID' && key !== 'REC_ID'; else textOrNumberInput">
                       <input matInput [matDatepicker]="datePickerRight" formControlName="{{ key }}" />
                       <mat-datepicker-toggle matSuffix [for]="datePickerRight"></mat-datepicker-toggle>
                       <mat-datepicker #datePickerRight></mat-datepicker>

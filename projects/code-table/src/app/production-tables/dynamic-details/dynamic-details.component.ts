@@ -90,7 +90,7 @@ export class DynamicDetailsComponent {
     "SSAS_AUTH_AGENT_AND_HOLD": ["ID","REC_ID","SERVICE_GRP", "AUTH_AGENT_TYPE", "AUTH_AGENT_NAME",
       "AUTH_AGENT_ID", "AUTH_AGENT_MAIL_CODE", "AUTH_AGENT_PHONE", "AGENCY_CODE",
       "IS_PROGRAM_ON_HOLD", "HOLD_BEGIN_DATE", "HOLD_END_DATE", "COMMENTS", "ACTIVE", "CONTRACT_CAP_CHECK"],
-      "SSAS_CAP_THRESHOLD_CEILING": ["ID", "REC_ID","SERVICE_GRP", "CAP_ID", "CAP_TYPE", 
+    "SSAS_CAP_THRESHOLD_CEILING": ["ID", "REC_ID","SERVICE_GRP", "CAP_ID", "CAP_TYPE", 
        "LEVEL_OF_SERVICE", "SERVICE_CODES", "BEGIN_DATE", "END_DATE", "LIMIT_TYPE",
        "STATE_THRESHOLD", "COACH_THRESHOLD", "PERCENT_200_THRESHOLD", "LIFE_TIME_CAP_MET",
        "AGE_LIMIT_TYPE", "RANGE_LIMITATION_SERVICE_CODE", "RANGE_LOWER_LIMIT",
@@ -105,7 +105,7 @@ export class DynamicDetailsComponent {
       console.log("No row selected for dynamic-details");
       return; 
     }
-
+    
     if (this.dynamicDetailsForm) {
       this.dynamicDetailsForm.reset();
     }
@@ -116,7 +116,11 @@ export class DynamicDetailsComponent {
                           ? selectedTableValue  : 'default'; 
     const allowedColumns = this.allowedColumnsMap[selectedTable] || Object.keys(selectedRowDetails); 
     console.log("allowedColumns:", allowedColumns);
-    this.columnKeys = Object.keys(selectedRowDetails).filter(key => allowedColumns.includes(key));
+    const fieldMappings: Record<string, string> = {
+      'SERVICE_GRP': 'SERVICE_GROUP',
+      "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD"
+    };
+    this.columnKeys = allowedColumns.map(col => fieldMappings[col] || col).filter(mappedKey => mappedKey in selectedRowDetails);
 
     // Build form controls
     const formControls: { [key: string]: any } = {};

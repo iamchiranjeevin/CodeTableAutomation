@@ -124,7 +124,13 @@ export class DynamicDetailsComponent {
 
     // Build form controls
     const formControls: { [key: string]: any } = {};
-    this.columnKeys.forEach((key) => {formControls[key] = [selectedRowDetails[key] ?? '']; });
+    this.columnKeys.forEach((key) => {
+      if (key === 'ID') {
+        formControls[key] = [{ value: selectedRowDetails[key] ?? '', disabled: true }];
+      } else {
+        formControls[key] = [selectedRowDetails[key] ?? ''];
+      }
+    });
 
     // Create new form instance
     this.dynamicDetailsForm = this.#fb.group(formControls);
@@ -165,7 +171,7 @@ export class DynamicDetailsComponent {
            const tableName = currentDetails?.['TABLE_NAME'] || 
                             (currentDetails?.['REC_ID'] === 'SSAS_AUTH_AGENT_AND_HOLD' ? 'AAH-AUTH AGENT HOLD' : 'CAP- CAP_ THRESHOLD');
                 
-                let updatedFormValues = this.dynamicDetailsForm.value;
+                let updatedFormValues = this.dynamicDetailsForm.getRawValue();
                 
                 const updatedUpperSnakeValues = this.convertCamelKeysToUpperSnakeCase(updatedFormValues);
                

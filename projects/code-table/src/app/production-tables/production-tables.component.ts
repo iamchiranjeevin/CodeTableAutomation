@@ -41,7 +41,7 @@ import { ExportDialogComponent } from './shared/export-dialog.component';
 import { CommonModule } from '@angular/common';
 import { NoDataDialogComponent } from './no-data-dialog.component';
 import { SearchTableDialogComponent } from './search/searchtable-dialog.component';
-
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-production-tables',
@@ -64,7 +64,8 @@ import { SearchTableDialogComponent } from './search/searchtable-dialog.componen
     MatSortHeader,
     DynamicDetailsComponent,
     MatIconModule,
-    [CommonModule]
+    [CommonModule],
+    MatProgressSpinnerModule
   ],
   templateUrl: './production-tables.component.html',
   styleUrl: './production-tables.component.scss',
@@ -96,11 +97,12 @@ export class ProductionTablesComponent implements AfterViewInit {
     "SERVICE_LOWER_LIMIT": "RANGE_LOWER_LIMIT",
     "SERVICE_UPPER_LIMIT": "RANGE_UPPER_LIMIT"
   };    
+  loading = signal(true);
 
   constructor(public dialog: MatDialog) {    
     this.#route.params.subscribe(params => {     
       const name = params['name']; 
-      if (name) {
+      if (name) {        
         // Clear dynamic details before loading new table
         this.#productionTablesStore.updateDynamicDetails(null);
         const apiTableName = getApiTableName(name);        
@@ -108,28 +110,33 @@ export class ProductionTablesComponent implements AfterViewInit {
         this.#productionTablesStore.loadProductionTables(apiTableName);
       }
     });
-    effect(() => {     
-      const tableData = this.#productionTablesStore.getTableDetails();      
-       if (tableData) {
-         this.dataSource.data = tableData;
-         this.totalRows = tableData.length;
-         if (tableData.length > 0) {
+    effect(() => { 
+      this.loading.set(true);
+      const tableData = this.#productionTablesStore.getTableDetails();
+      queueMicrotask(() => {
+        if (tableData && tableData.length > 0) {
+          this.dataSource.data = tableData;
+          this.totalRows = tableData.length;
+    
           let apiTableName = this.#productionTablesStore.currentTableName();
           if (!apiTableName) {
-            apiTableName = getApiTableName(this.#route.snapshot.params['name']);            
-          } 
-           this.updateTableDetails(tableData, apiTableName);
-         }
-         else {
-          console.log('No records found.');
+            apiTableName = getApiTableName(this.#route.snapshot.params['name']);
+          }
+    
+          this.updateTableDetails(tableData, apiTableName);
+          this.loading.set(false); 
+        } else if (tableData && tableData.length === 0) {
           this.dialog.open(NoDataDialogComponent, {
-            width: '400px'
+            width: '400px',
           });
-          this.dataSource.data = []; 
+    
+          this.dataSource.data = [];
           this.totalRows = 0;
-        }
-       }      
-     });
+          this.loading.set(false); 
+        }        
+      });
+    });
+      
      // Add a separate effect for handling dynamic details
      effect(() => {
       const dynamicDetails = this.#productionTablesStore.getDynamicDetails();

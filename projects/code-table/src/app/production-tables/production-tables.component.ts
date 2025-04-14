@@ -91,18 +91,21 @@ export class ProductionTablesComponent implements AfterViewInit {
   readonly #destroyRef = inject(DestroyRef);
   hiddenColumns = new Set<string>(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
      'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']);
-  columnNameMapping: Record<string, string> = {
-    "SERVICE_GRP": "SERVICE_GROUP",
-    "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD",
-    "SERVICE_LOWER_LIMIT": "RANGE_LOWER_LIMIT",
-    "SERVICE_UPPER_LIMIT": "RANGE_UPPER_LIMIT"
-  };    
+     columnNameMapping: Record<string, string> = {
+      "SERVICE_GRP": "SERVICE_GROUP",
+      "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD",
+      "SERVICE_LOWER_LIMIT": "RANGE_LOWER_LIMIT",
+      "SERVICE_UPPER_LIMIT": "RANGE_UPPER_LIMIT",
+      "BILLING_CD": "BILLING_CODE",
+      "FUND_CD" : "FUND_CODE"
+    };   
   loading = signal(true);
 
   constructor(public dialog: MatDialog) {    
     this.#route.params.subscribe(params => {     
       const name = params['name']; 
-      if (name) {        
+      if (name) {       
+                
         // Clear dynamic details before loading new table
         this.#productionTablesStore.updateDynamicDetails(null);
         const apiTableName = getApiTableName(name);        
@@ -114,7 +117,7 @@ export class ProductionTablesComponent implements AfterViewInit {
       this.loading.set(true);
       const tableData = this.#productionTablesStore.getTableDetails();
       queueMicrotask(() => {
-        if (tableData && tableData.length > 0) {
+        if (tableData && tableData.length > 0) {          
           this.dataSource.data = tableData;
           this.totalRows = tableData.length;
     
@@ -124,8 +127,8 @@ export class ProductionTablesComponent implements AfterViewInit {
           }
     
           this.updateTableDetails(tableData, apiTableName);
-          this.loading.set(false); 
-        } else if (tableData && tableData.length === 0) {
+          this.loading.set(false);          
+        } else if (!this.loading() && Array.isArray(tableData) && tableData.length === 0) {
           this.dialog.open(NoDataDialogComponent, {
             width: '400px',
           });
@@ -218,7 +221,8 @@ export class ProductionTablesComponent implements AfterViewInit {
      "SSAS_CAP_THRESHOLD_CEILING": new Set([
          'PHASE', 'REC_ID', 'PHASE_TYPE', 'CREATE_DATE', 'CREATE_BY',
          'UPDATE_DATE', 'UPDATE_BY', 'STATUS'
-       ])
+       ]),
+       "CF1": new Set(['PHASE', 'REC_ID', 'ID','PHASE_TYPE','SORT_ORDER','TMHP_FLAG']),
      };
      this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
      this.columnsToDisplay.set(mappedKeys.filter(column => !this.hiddenColumns.has(column)));

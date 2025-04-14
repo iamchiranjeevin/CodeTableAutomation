@@ -90,5 +90,20 @@ export type CapUpdateRequestBody = BaseUpdateRequestBody & {
   };
 };
 
-export type UpdateRequestBody = AAHUpdateRequestBody | CapUpdateRequestBody;
+export type CF1UpdateRequestBody = BaseUpdateRequestBody & {
+  row: {
+ ID : number
+ITEM_CD	: string;
+DESCRIPTION :string;
+ACTIVE : string;
+BEGIN_DATE :string | null;	
+END_DATE :string | null;	
+PHASE_TYPE	: string;
+COMMENTS	: string;
+SORT_ORDER	: string;
+TMHP_FLAG	: string;
+  };
+};
+
+export type UpdateRequestBody = AAHUpdateRequestBody | CapUpdateRequestBody | CF1UpdateRequestBody;
 

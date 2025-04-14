@@ -30,12 +30,14 @@ import { trimTablePrefix } from '../shared/utils';
 
 const TABLE_NAME_API_MAPPING: Record<string, string> = {
   'AAH-AUTH AGENT HOLD': 'SSAS_AUTH_AGENT_AND_HOLD',
-  'CAP- CAP_ THRESHOLD': 'SSAS_CAP_THRESHOLD_CEILING'
+  'CAP- CAP_ THRESHOLD': 'SSAS_CAP_THRESHOLD_CEILING',
+  'CF1-BILLING CODE': 'MG1_CF1'
 };
 
 const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = {
   'SSAS_AUTH_AGENT_AND_HOLD': 'AAH-AUTH AGENT HOLD',
-  'SSAS_CAP_THRESHOLD_CEILING': 'CAP- CAP_ THRESHOLD'
+  'SSAS_CAP_THRESHOLD_CEILING': 'CAP- CAP_ THRESHOLD',
+  'MG1_CF1': 'CF1-BILLING CODE'
 };
 
 @Component({
@@ -75,12 +77,12 @@ export class DynamicDetailsComponent {
   private apiFieldMapping: Record<string, string> = {
     "RANGE_LOWER_LIMIT": "SERVICE_LOWER_LIMIT",
     "RANGE_UPPER_LIMIT": "SERVICE_UPPER_LIMIT"
-  };
+  };  
 
   constructor(private dynamicDetailsService: DynamicDetailsService,
     private confirmDialogService: ConfirmDialogService,    
     private snackBar: MatSnackBar,
-     private router: ActivatedRoute) {
+     private router: ActivatedRoute) {      
     effect(() => {      
       this.buildDynamicForm();
     });
@@ -94,10 +96,32 @@ export class DynamicDetailsComponent {
        "LEVEL_OF_SERVICE", "SERVICE_CODES", "BEGIN_DATE", "END_DATE", "LIMIT_TYPE",
        "STATE_THRESHOLD", "COACH_THRESHOLD", "PERCENT_200_THRESHOLD", "LIFE_TIME_CAP_MET",
        "AGE_LIMIT_TYPE", "RANGE_LIMITATION_SERVICE_CODE", "RANGE_LOWER_LIMIT",
-       "RANGE_UPPER_LIMIT", "ACTIVE", "COMMENTS", "TMHP_FLAG", "THRESHOLD_INDICATOR"]  
+       "RANGE_UPPER_LIMIT", "ACTIVE", "COMMENTS", "TMHP_FLAG", "THRESHOLD_INDICATOR"],
+    "CF1": ["ID", "REC_ID","SERVICE_GRP", "DESCRIPTION", "ATYPICAL_INDICATOR","BILLING_CODE",
+      "ACTIVE", "BEGIN_DATE", "END_DATE",  "COMMENTS", "TMHP_FLAG" ]  
   };
+  
   private convertUpperSnakeToUpperCase(key: string): string {
     return key.replace(/_/g, ' '); 
+  }
+
+  onInputLimit(event: Event, maxLength: number): void {
+    const input = event.target as HTMLInputElement;
+    if (input.value.length > maxLength) {
+      input.value = input.value.slice(0, maxLength);
+    }
+  }
+  
+  blockOverPaste(event: ClipboardEvent, maxLength: number): void {
+    const pasteText = event.clipboardData?.getData('text') ?? '';
+    const input = event.target as HTMLInputElement;
+    const currentValue = input.value;
+    const combined = currentValue + pasteText;
+  
+    if (combined.length > maxLength) {
+      event.preventDefault();
+      input.value = combined.slice(0, maxLength);
+    }
   }
   buildDynamicForm() {
     const selectedRowDetails = this.#productionTablesStore.getDynamicDetails()() as ProductionTableData | null;
@@ -124,11 +148,11 @@ export class DynamicDetailsComponent {
 
     // Build form controls
     const formControls: { [key: string]: any } = {};
-    this.columnKeys.forEach((key) => {
+    this.columnKeys.forEach((key) => {      
       if (key === 'ID') {
-        formControls[key] = [{ value: selectedRowDetails[key] ?? '', disabled: true }];
+        formControls[key] = [{ value: selectedRowDetails[key] ?? '', disabled: true }, validators];
       } else {
-        formControls[key] = [selectedRowDetails[key] ?? ''];
+        formControls[key] = [selectedRowDetails[key] ?? '', validators];
       }
     });
 
@@ -145,7 +169,8 @@ export class DynamicDetailsComponent {
     const customColumnLabels: Record<string, string> = {
       "SERVICE_GRP": "SERVICE GROUP",
       "AUTH_AGENT_MAIL_CODE": "AUTH AGENT MAIL GROUP",
-      "IS_PROGRAM_ON_HOLD": "PROGRAM ON HOLD"
+      "IS_PROGRAM_ON_HOLD": "PROGRAM ON HOLD",
+      "FUND_CD": "FUND CODE"
     };
 
   
@@ -168,8 +193,10 @@ export class DynamicDetailsComponent {
 
               // Get the current table details
            const currentDetails = this.#productionTablesStore.getDynamicDetails()();
-           const tableName = currentDetails?.['TABLE_NAME'] || 
-                            (currentDetails?.['REC_ID'] === 'SSAS_AUTH_AGENT_AND_HOLD' ? 'AAH-AUTH AGENT HOLD' : 'CAP- CAP_ THRESHOLD');
+           const tableName = currentDetails?.['TABLE_NAME'] ||
+           (currentDetails?.['REC_ID'] === 'SSAS_AUTH_AGENT_AND_HOLD' ? 'AAH-AUTH AGENT HOLD' :
+            currentDetails?.['REC_ID'] === 'SSAS_CAP_THRESHOLD_CEILING' ? 'CAP- CAP_ THRESHOLD' :
+            currentDetails?.['REC_ID'] === 'CF1' ? 'CF1-BILLING CODE' : 'CFB- BILLING COMBINATION');
                 
                 let updatedFormValues = this.dynamicDetailsForm.getRawValue();
                 
@@ -177,6 +204,10 @@ export class DynamicDetailsComponent {
                
                 updatedUpperSnakeValues["SERVICE_GRP"] = updatedUpperSnakeValues["SERVICE_GROUP"] ?? updatedUpperSnakeValues["SERVICE_GRP"];
                 delete updatedUpperSnakeValues["SERVICE_GROUP"];
+
+                  //FUND CODE FOR CFB TABLE
+                  updatedUpperSnakeValues["FUND_CD"] = updatedUpperSnakeValues["FUND_CODE"] ?? updatedUpperSnakeValues["FUND_CD"];
+                  delete updatedUpperSnakeValues["FUND_CODE"];
 
                 updatedUpperSnakeValues["AUTH_AGENT_MAIL_CODE"] = updatedUpperSnakeValues["AUTH_AGENT_MAIL_GROUP"] ?? updatedUpperSnakeValues["AUTH_AGENT_MAIL_CODE"];
                 delete updatedUpperSnakeValues["AUTH_AGENT_MAIL_GROUP"];
@@ -333,6 +364,27 @@ export class DynamicDetailsComponent {
          THRESHOLD_INDICATOR: mappedData['THRESHOLD_INDICATOR'] || 'N'
       };
 
+      return {
+        ...baseRequest,
+        row
+      };
+    }
+
+    else if (tableType === 'CF1') {
+      // Handle CF1-specific field mappings
+      const row = {
+        ID: typeof filteredRowData['ID'] === 'string' ? parseInt(filteredRowData['ID']) : filteredRowData['ID'],
+        BILLING_CD: filteredRowData['BILLING_CODE'] || filteredRowData['BILLING_CD'] || '',
+        DESCRIPTION: filteredRowData['DESCRIPTION'] || '',
+        ACTIVE: filteredRowData['ACTIVE'] || 'A',
+        BEGIN_DATE: this.formatDate(filteredRowData['BEGIN_DATE']) || null,
+        END_DATE: this.formatDate(filteredRowData['END_DATE']) || null,
+        COMMENTS: filteredRowData['COMMENTS'] || null,
+        SORT_ORDER: parseInt(filteredRowData['SORT_ORDER'] || '0'),
+        ATYPICAL_INDICATOR: filteredRowData['ATYPICAL_INDICATOR'] || 'Y',
+        TMHP_FLAG: filteredRowData['TMHP_FLAG'] || 'Y'
+      };
+ 
       return {
         ...baseRequest,
         row

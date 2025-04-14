@@ -35,7 +35,8 @@
                       <mat-datepicker #datePickerLeft></mat-datepicker>
                     </ng-container>
                     <ng-template #textOrNumberInput>
-                      <input matInput formControlName="{{ key }}" maxlength="5" (input)="onInputLimit($event, 5)" (paste)="blockOverPaste($event, 5)"/>                      
+                      <input matInput formControlName="{{ key }}" [attr.maxlength]="fieldMaxLengthMap[key] || null"
+                      (input)="onInputLimit($event, fieldMaxLengthMap[key])" (paste)="blockOverPaste($event, fieldMaxLengthMap[key])"/>                      
                     </ng-template>
                   </ng-template>
                 </mat-form-field>
@@ -72,7 +73,8 @@
                       <mat-datepicker #datePickerRight></mat-datepicker>
                     </ng-container>
                     <ng-template #textOrNumberInput>
-                      <input matInput formControlName="{{ key }}" maxlength="5" (input)="onInputLimit($event, 5)" (paste)="blockOverPaste($event, 5)"/>                      
+                      <input matInput formControlName="{{ key }}" [attr.maxlength]="fieldMaxLengthMap[key] || null"
+                      (input)="onInputLimit($event, fieldMaxLengthMap[key])" (paste)="blockOverPaste($event, fieldMaxLengthMap[key])"/> 
                     </ng-template>
                   </ng-template>
                 </mat-form-field>

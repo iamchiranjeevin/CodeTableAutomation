@@ -100,6 +100,13 @@ export class DynamicDetailsComponent {
     "CF1": ["ID", "REC_ID","SERVICE_GRP", "DESCRIPTION", "ATYPICAL_INDICATOR","BILLING_CODE",
       "ACTIVE", "BEGIN_DATE", "END_DATE",  "COMMENTS", "TMHP_FLAG" ]  
   };
+
+  fieldMaxLengthMap: Record<string, number> = {
+    SERVICE_GRP: 5,
+    SERVICE_GROUP: 5,
+    CAP_ID: 10,
+    SERVICE_CODES: 3
+  };
   
   private convertUpperSnakeToUpperCase(key: string): string {
     return key.replace(/_/g, ' '); 
@@ -150,9 +157,9 @@ export class DynamicDetailsComponent {
     const formControls: { [key: string]: any } = {};
     this.columnKeys.forEach((key) => {      
       if (key === 'ID') {
-        formControls[key] = [{ value: selectedRowDetails[key] ?? '', disabled: true }, validators];
+        formControls[key] = [{ value: selectedRowDetails[key] ?? '', disabled: true }];
       } else {
-        formControls[key] = [selectedRowDetails[key] ?? '', validators];
+        formControls[key] = [selectedRowDetails[key] ?? ''];
       }
     });
 

@@ -155,19 +155,10 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   
-    setTimeout(() => {
-      if (this.totalRows > 2500) {
-        this.paginator.pageSize = 2500;  
-        this.paginator.length = this.totalRows;
-        this.paginator.pageSizeOptions = []; 
-        this.cdr.detectChanges(); 
-      }
-    });
-
     const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
-     if (apiTableName) {      
-       this.#productionTablesStore.loadProductionTables(apiTableName);
-     }
+    if (apiTableName) {
+      this.#productionTablesStore.loadProductionTables(apiTableName);
+    }
   }
 
   showDetails(row: ProductionTableData) {
@@ -231,9 +222,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.data.set(tableRows);
     this.dataSource.data = tableRows;
 
-    if (tableRows.length > 2500) {
-      this.dataSource.paginator = this.paginator;
-    }
+    this.dataSource.paginator = this.paginator;
   }
 
 openExportDialog() {

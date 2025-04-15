@@ -45,12 +45,11 @@
 
     <!-- Pagination -->
     <mat-paginator
-      *ngIf="totalRows > 2500"
-      [length]="totalRows"
-      [pageSize]="2500"
-      [pageSizeOptions]="[]"
-      [showFirstLastButtons]="true">
-    </mat-paginator>
+  [length]="totalRows"
+  [pageSize]="2500"
+  [pageSizeOptions]="[2500]"
+  [showFirstLastButtons]="true">
+</mat-paginator>
   </ng-container>
 </div>
 

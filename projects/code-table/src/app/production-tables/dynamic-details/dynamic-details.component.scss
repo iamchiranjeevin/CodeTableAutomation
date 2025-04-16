@@ -1,76 +1,133 @@
-@use 'tailwindcss'; 
- 
- .button-container {
-   @apply w-full flex justify-start mt-4;
- }
- 
- .hidden-field {
-   display: none; 
- }
- 
- .custom-button {
-   background-color: #9575CD !important; 
-   color: white !important;
-   font-weight: bold;
-   border: none;
-   padding: 8px 16px;
-   border-radius: 4px;
-   cursor: pointer; 
-   transition: background-color 0.3s ease-in-out;
- }
- 
- .custom-button:hover {
-   background-color: #7E57C2 !important; 
-   cursor: pointer;
- }
-
- .success-toast {
-  background-color: #4CAF50 !important; /* Green */
-  color: white !important;
-  font-size: 16px;
-  font-weight: bold;
- }
- .error-toast {
-  background-color: #F44336 !important; /* Red */
-  color: white !important;
-  font-size: 16px;
-  font-weight: bold;
+.dynamic-details-container {
+  display: flex;
+  gap: 0px; 
+  column-gap: 2px;
 }
 
-.dynamic-details-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
-  gap: 16px; /* Space between columns */
-  max-width: 1000px;
-  margin: auto;
+.dynamic-details-column {
+  flex: 1 1 49.8%;
 }
 
 .field-row {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Ensures labels and inputs are aligned properly */
-  gap: 8px;
+  gap: 2px; // ↓ Was 6px
+  margin-bottom: 4px; // ↓ Reduce vertical spacing too
 }
 
 .field-label {
-  flex: 0.4; /* Adjust label width */
+  flex: 0 0 80px; // ↓ From 100px
   font-weight: bold;
-  text-align: left; /* Left align labels */
-  white-space: nowrap;
+  font-size: 10px;
+  white-space: normal; // Allow wrapping
+  line-height: 1.2;
 }
 
+
 .field-input {
-  flex: 0.6; /* Input takes remaining space */
-  width: 100%;
+  flex: 1;
+  font-size: 9px;
+  min-height: 24px;
+  flex: 0 0 auto;
+}
+::ng-deep input.mat-input-element {
+  padding: 0 2px !important;   // Reduced horizontal padding
+  font-size: 9px !important;
+  height: 20px !important;
+  line-height: 1.2 !important;
 }
 
 .mat-form-field {
-  width: 100%; /* Ensures input fields fit properly */
+  width: 100%;
+  font-size: 9px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-::ng-deep .mat-tab-body-wrapper,
-::ng-deep .mat-mdc-tab-body-content {
-  overflow: hidden !important;
-  height: auto !important;
-  max-height: none !important;
+::ng-deep .mat-form-field-wrapper,
+::ng-deep .mat-form-field-flex,
+::ng-deep .mat-form-field-infix {
+  padding: 0 !important;
+  height: 24px !important;
+  line-height: 1.2;
+}
+
+::ng-deep input[matinput] {
+  height: 20px !important;
+  font-size: 9px !important;
+  padding: 2px 4px !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box;
+}
+
+::ng-deep input.mat-input-element,
+::ng-deep textarea.mat-input-element {
+  font-size: 9px !important;
+  height: 10px !important;
+  padding: 2px 4px !important;
+}
+
+::ng-deep .mat-datepicker-toggle {
+  height: 20px !important;
+  min-width: 20px !important;
+}
+
+::ng-deep .mat-datepicker-toggle .mat-icon-button {
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+::ng-deep .mat-datepicker-toggle-default-icon {
+  font-size: 16px !important;
+}
+
+.number-input-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.number-input-container input {
+  height: 20px;
+  font-size: 9px;
+  padding: 0 2px;
+}
+
+.number-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.number-controls button {
+  width: 16px;
+  height: 10px;
+  line-height: 10px;
+  font-size: 9px;
+  padding: 0;
+}
+@media (max-width: 768px) {
+  .dynamic-details-column {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .field-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .field-label {
+    text-align: left;
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .field-input {
+    width: 100%;
+  }
 }

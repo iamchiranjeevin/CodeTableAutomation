@@ -138,3 +138,14 @@
    height: auto !important;
    max-height: none !important;
  }
+
+ .custom-button {
+  background-color: #9575CD !important; 
+  color: white !important;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer; 
+  transition: background-color 0.3s ease-in-out;
+ }

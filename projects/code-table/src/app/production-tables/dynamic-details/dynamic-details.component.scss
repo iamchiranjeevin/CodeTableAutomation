@@ -131,3 +131,10 @@
     width: 100%;
   }
 }
+
+::ng-deep .mat-tab-body-wrapper,
+ ::ng-deep .mat-mdc-tab-body-content {
+   overflow: hidden !important;
+   height: auto !important;
+   max-height: none !important;
+ }

@@ -1,0 +1,43 @@
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+}
+
+.label-container {
+  flex: 1;
+  text-align: right;
+  padding-right: 10px;
+  font-weight: bold;
+}
+
+.field-container {
+  flex: 2;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  width: 100%; 
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+mat-dialog-content {
+  max-height: 60vh; 
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}

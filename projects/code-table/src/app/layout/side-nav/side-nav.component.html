@@ -1,0 +1,38 @@
+<mat-tree
+  #tree
+  [childrenAccessor]="childrenAccessor"
+  [dataSource]="dataSource">
+  
+  <!-- Leaf Node (Menu Link) -->
+  <mat-tree-node
+    *matTreeNodeDef="let node"
+    matTreeNodePadding
+    routerLinkActive="active">
+    
+    <button disabled mat-icon-button></button>
+    <a [routerLink]="node.path">
+      {{ node.title }}
+    </a>
+  </mat-tree-node>
+
+  <!-- Expandable Node -->
+  <mat-tree-node
+    *matTreeNodeDef="let node; when: hasChild"
+    matTreeNodePadding
+    matTreeNodeToggle>
+    
+    <button mat-icon-button matTreeNodeToggle>
+      <mat-icon>{{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+    </button>
+    {{ node.title }}
+  </mat-tree-node>
+</mat-tree>
+
+<!-- Custom Context Menu -->
+<div
+  class="context-menu"
+  *ngIf="contextMenuVisible"
+  [ngStyle]="{'top.px': menuY, 'left.px': menuX}"
+  (mouseleave)="closeContextMenu()">
+  <button (click)="openDialog()">Search {{ selectedTableName }}</button>
+</div>

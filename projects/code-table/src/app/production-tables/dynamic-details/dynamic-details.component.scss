@@ -1,0 +1,75 @@
+@use 'tailwindcss'; 
+ 
+ .button-container {
+   @apply w-full flex justify-start mt-4;
+ }
+ 
+ .hidden-field {
+   display: none; 
+ }
+ 
+ .custom-button {
+   background-color: #9575CD !important; 
+   color: white !important;
+   font-weight: bold;
+   border: none;
+   padding: 8px 16px;
+   border-radius: 4px;
+   cursor: pointer; 
+   transition: background-color 0.3s ease-in-out;
+ }
+ 
+ .custom-button:hover {
+   background-color: #7E57C2 !important; 
+   cursor: pointer;
+ }
+
+ .success-toast {
+  background-color: #4CAF50 !important; /* Green */
+  color: white !important;
+  font-size: 16px;
+  font-weight: bold;
+ }
+ .error-toast {
+  background-color: #F44336 !important; /* Red */
+  color: white !important;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.dynamic-details-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 16px; /* Space between columns */
+  max-width: 1000px;
+  margin: auto;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Ensures labels and inputs are aligned properly */
+  gap: 8px;
+}
+
+.field-label {
+  flex: 0.4; /* Adjust label width */
+  font-weight: bold;
+  text-align: left; /* Left align labels */
+  white-space: nowrap;
+}
+
+.field-input {
+  flex: 0.6; /* Input takes remaining space */
+  width: 100%;
+}
+
+.mat-form-field {
+  width: 100%; /* Ensures input fields fit properly */
+}
+::ng-deep .mat-tab-body-wrapper,
+ ::ng-deep .mat-mdc-tab-body-content {
+   overflow: hidden !important;
+   height: auto !important;
+   max-height: none !important;
+ }

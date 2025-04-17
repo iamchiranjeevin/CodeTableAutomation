@@ -1,0 +1,59 @@
+<div class="w-full h-full max-w-full flex flex-col items-stretch justify-items-start">
+  <div class="flex flex-row items-center justify-between p-3">
+    <h2><strong>{{ tableName() }}</strong></h2>
+    <div class="flex gap-2">
+      <button mat-raised-button color="accent" (click)="openDialog()" class="cursor-pointer">
+        <mat-icon>search</mat-icon> Search
+      </button>
+      <button mat-raised-button color="primary" (click)="openExportDialog()" class="cursor-pointer">
+        <mat-icon>download</mat-icon> Export
+      </button>    
+    </div>
+  </div>
+
+  <mat-divider class="w-full"></mat-divider>
+
+ 
+  <div *ngIf="loading() && !(dataSource?.data?.length)" class="flex justify-center items-center h-[300px]">
+    <mat-spinner [diameter]="50" color="primary"></mat-spinner>
+  </div>
+
+
+  <ng-container *ngIf="!loading()">
+    <div id="productionTable" class="overflow-x-auto max-w-full w-full grow prodtbldiv" #productionTable>    
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+        
+        <!-- Dynamic Column Definitions -->
+        <ng-container *ngFor="let column of columnsToDisplay()" [matColumnDef]="column">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ columnNameMapping[column] || column | snakeCaseToString }}
+          </th>
+          <td mat-cell *matCellDef="let element">
+            {{
+              column === 'HOLD_BEGIN_DATE' || column === 'HOLD_END_DATE' || column === 'BEGIN_DATE' || column === 'END_DATE'
+              || column === 'CREATE_DATE' || column === 'UPDATE_DATE'
+              ? (element[column] | date:'MM/dd/yyyy') 
+              : element[column]
+            }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplay()"></tr>
+        <tr class="mat-mdc-row-prod" mat-row *matRowDef="let row; columns: columnsToDisplay();" (click)="showDetails(row)"></tr>
+      </table>  
+    </div>
+
+    <!-- Pagination -->
+    <mat-paginator
+    [length]="totalRows"
+    [pageSize]="2500"
+    [pageSizeOptions]="[2500]"
+    [showFirstLastButtons]="true">
+   </mat-paginator>
+    </ng-container>
+</div>
+
+<!-- Details Component -->
+@if (dynamicDetails()) {
+  <app-dynamic-details />
+}

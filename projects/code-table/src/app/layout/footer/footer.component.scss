@@ -1,0 +1,8 @@
+@use 'tailwindcss';
+@use '@angular/material' as mat;
+
+.app-footer {
+  @apply flex flex-col justify-stretch items-start gap-3 w-full p-3;
+  background-color: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+}

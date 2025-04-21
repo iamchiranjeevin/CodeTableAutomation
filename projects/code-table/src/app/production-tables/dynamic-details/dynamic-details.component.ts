@@ -120,7 +120,6 @@ const REVERSE_TABLE_NAME_MAPPING: Record<string, string> = {
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
-    MatIcon,
     ReactiveFormsModule,
     CommonModule,
     MatIconModule,

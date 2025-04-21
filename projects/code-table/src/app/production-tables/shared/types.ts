@@ -2,6 +2,7 @@ export type ProductionTable = {
   name: string;
   id: number;
   data: ProductionTableData[];
+  totalRowCount?: number | null;
 };
  
 export type ProductionTableData = {

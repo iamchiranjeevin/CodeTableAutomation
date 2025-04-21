@@ -9,13 +9,12 @@ import {
   HostBinding,
   inject,
   signal,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDivider } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginator } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import {
@@ -39,8 +38,15 @@ import { ProductionTablesStore } from './production-tables.store';
 import { SearchTableDialogComponent } from './search/searchtable-dialog.component';
 import { ExportDialogComponent } from './shared/export-dialog.component';
 import { ProductionTableData } from './shared/types';
-import { getApiTableName, getDisplayTableName, propsToSet, trimTableSuffix } from './shared/utils';
-
+import { MatSortModule } from '@angular/material/sort';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
+import {
+  getApiTableName,
+  getDisplayTableName,
+  propsToSet,
+  trimTableSuffix,
+} from './shared/utils';
 
 @Component({
   selector: 'app-production-tables',
@@ -57,14 +63,14 @@ import { getApiTableName, getDisplayTableName, propsToSet, trimTableSuffix } fro
     MatRowDef,
     MatRow,
     SnakeCaseToStringPipe,
-    MatPaginator,
+    MatPaginatorModule,
+    MatTableModule,
+    MatSortModule,
     MatDivider,
-    MatSort,
-    MatSortHeader,
     DynamicDetailsComponent,
     MatIconModule,
     [CommonModule],
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ],
   templateUrl: './production-tables.component.html',
   styleUrl: './production-tables.component.scss',
@@ -72,12 +78,14 @@ import { getApiTableName, getDisplayTableName, propsToSet, trimTableSuffix } fro
   providers: [provideDateFnsAdapter()],
 })
 export class ProductionTablesComponent implements AfterViewInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator, { static: false }) paginator!: MatPaginator;
+  @ViewChild(MatSort, { static: false }) sort!: MatSort;
   @HostBinding('class') className = 'h-full';
   tableName = signal('');
-  dataSource: MatTableDataSource<ProductionTableData>;
+  dataSource: MatTableDataSource<ProductionTableData> =
+    new MatTableDataSource();
   totalRows: number = 0;
+  pageSizeOptions: number[] = [];
   private cdr = inject(ChangeDetectorRef);
 
   protected displayedColumns = signal<string[]>([]);
@@ -88,18 +96,26 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.#productionTablesStore.getDynamicDetails();
   readonly #route = inject(ActivatedRoute);
   readonly #destroyRef = inject(DestroyRef);
-  hiddenColumns = new Set<string>(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
-    'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']);
+  hiddenColumns = new Set<string>([
+    'PHASE',
+    'REC_ID',
+    'ID',
+    'CREATE_DATE',
+    'CREATE_BY',
+    'UPDATE_DATE',
+    'UPDATE_BY',
+    'PHASE_TYPE',
+  ]);
   columnNameMapping: Record<string, string> = {
-    "SERVICE_GRP": "SERVICE_GROUP",
-    "IS_PROGRAM_ON_HOLD": "PROGRAM_ON_HOLD",
-    "SERVICE_LOWER_LIMIT": "RANGE_LOWER_LIMIT",
-    "SERVICE_UPPER_LIMIT": "RANGE_UPPER_LIMIT",
-    "BILLING_CD": "BILLING_CODE",
-    "FUND_CD": "FUND_CODE",
-    "ITEM_CD": "ITEM_CODE",//CFI
-    "ELIGIBILITY_CAT._CODE": "ELIGIBILITY_CATEGORY",
-    "PROC_CODE": "PROCEDURE_CODE"
+    SERVICE_GRP: 'SERVICE_GROUP',
+    IS_PROGRAM_ON_HOLD: 'PROGRAM_ON_HOLD',
+    SERVICE_LOWER_LIMIT: 'RANGE_LOWER_LIMIT',
+    SERVICE_UPPER_LIMIT: 'RANGE_UPPER_LIMIT',
+    BILLING_CD: 'BILLING_CODE',
+    FUND_CD: 'FUND_CODE',
+    ITEM_CD: 'ITEM_CODE', //CFI
+    'ELIGIBILITY_CAT._CODE': 'ELIGIBILITY_CATEGORY',
+    PROC_CODE: 'PROCEDURE_CODE',
   };
 
   loading = signal(true); //spin wheeler
@@ -121,22 +137,31 @@ export class ProductionTablesComponent implements AfterViewInit {
       this.loading.set(true);
       const tableData = this.#productionTablesStore.getTableDetails();
       queueMicrotask(() => {
-        if (tableData && tableData.length > 0) {
-          this.dataSource.data = tableData;
-          this.totalRows = tableData.length;
+        if (tableData.data) {
+          this.dataSource = new MatTableDataSource(tableData.data);
+          this.totalRows = tableData.totalRows ?? 0;
 
+          this.pageSizeOptions = Array.from(
+            { length: Math.ceil(this.totalRows / 200) },
+            (_, i) => (i + 1) * 200
+          );
+
+          setTimeout(() => {
+            if (this.dataSource) {
+              this.dataSource.paginator = this.paginator;
+              this.dataSource.sort = this.sort;
+            }
+          });
 
           let apiTableName = this.#productionTablesStore.currentTableName();
           if (!apiTableName) {
             apiTableName = getApiTableName(this.#route.snapshot.params['name']);
           }
 
-          this.updateTableDetails(tableData, apiTableName);
+          this.updateTableDetails(tableData.data, apiTableName);
 
           this.loading.set(false);
-
-
-        } else if (!this.loading() && Array.isArray(tableData) && tableData.length === 0) {
+        } else {
           this.dialog.open(NoDataDialogComponent, {
             width: '400px',
           });
@@ -155,31 +180,15 @@ export class ProductionTablesComponent implements AfterViewInit {
         this.cdr.detectChanges();
       }
     });
-
-    this.dataSource = new MatTableDataSource(this.data());
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-
     setTimeout(() => {
-      if (this.totalRows > 2500) {
-        this.paginator.pageSize = 2500;
-        this.paginator.length = this.totalRows;
-        this.paginator.pageSizeOptions = [];
-        this.cdr.detectChanges();
+      if (this.dataSource) {
+        this.dataSource.paginator = this.paginator;
+        this.dataSource.sort = this.sort;
       }
     });
-
-    const apiTableName = getApiTableName(this.#route.snapshot.params['name']);
-    if (apiTableName) {
-      this.loading.set(true);
-
-      this.#productionTablesStore.loadProductionTables(apiTableName);
-    }
   }
 
   showDetails(row: ProductionTableData) {
@@ -196,7 +205,6 @@ export class ProductionTablesComponent implements AfterViewInit {
         detailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
-
   }
 
   protected applyFilter(event: Event) {
@@ -208,23 +216,22 @@ export class ProductionTablesComponent implements AfterViewInit {
     }
   }
 
-  private loadTableData(params: Params) {
-    const tableName = params['name'];
-    if (!tableName) {
-      return;
-    }
+  // private loadTableData(params: Params) {
+  //   const tableName = params['name'];
+  //   if (!tableName) {
+  //     return;
+  //   }
 
-    const apiTableName = getApiTableName(tableName);
-    const tableRows = this.#productionTablesStore.getTableDetails();
-    if (!tableRows) {
-      return;
-    }
+  //   const apiTableName = getApiTableName(tableName);
+  //   const tableRows = this.#productionTablesStore.getTableDetails();
+  //   if (!tableRows) {
+  //     return;
+  //   }
 
-    this.totalRows = tableRows.length;
-    this.updateTableDetails(tableRows, apiTableName);
+  //   this.totalRows = tableRows.length;
+  //   this.updateTableDetails(tableRows, apiTableName);
 
-  }
-
+  // }
 
   private updateTableDetails(tableRows: any, apiTableName: string) {
     const keys = new Set<string>();
@@ -245,55 +252,356 @@ export class ProductionTablesComponent implements AfterViewInit {
 
     this.displayedColumns.set(mappedKeys);
     const tableSpecificHiddenColumns: Record<string, Set<string>> = {
-      "SSAS_AUTH_AGENT_AND_HOLD": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
-        'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']),
+      SSAS_AUTH_AGENT_AND_HOLD: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+        'PHASE_TYPE',
+      ]),
 
       //"MG1_SSAS_AUTH_AGENT_AND_HOLD": new Set(['PHASE','REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY',
       // 'UPDATE_DATE', 'UPDATE_BY', 'PHASE_TYPE']),
 
-      "SSAS_CAP_THRESHOLD_CEILING": new Set([
-        'PHASE', 'REC_ID', 'ID', 'STATUS', 'PHASE_TYPE']),
+      SSAS_CAP_THRESHOLD_CEILING: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'STATUS',
+        'PHASE_TYPE',
+      ]),
       // Add default hidden columns for all new tables
-      "CF1": new Set(['PHASE', 'REC_ID', 'ID', 'PHASE_TYPE', 'SORT_ORDER', 'TMHP_FLAG']),
-      "CFB": new Set(['PHASE', 'REC_ID', 'ID', 'PHASE_TYPE']),
-      "CFI": new Set(['PHASE', 'REC_ID', 'ID', 'SORT_ORDER', 'PHASE_TYPE', 'TMHP_FLAG']),
-      "CFM": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "CFP": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CFR": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CLC": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CLS": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CMD": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CMR": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CNB": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CNP": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CNC": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_COV": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CPQ": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CPS": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CPT": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CRC": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CSG": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CSI": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CSP": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CSR": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_CSS": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_DA2": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_DA3": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_DAD": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_DCE": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_SSAS_DIAGNOSIS": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_ECC": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_FCD": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_FSR": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_SSAS_SERVICE_RESI_LOCATION": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_LST": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_SSAS_MOVEMENT_SEQUENCES": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_PME": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_SSAS_REFERENCE_TABLE": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY']),
-      "MG1_SGO": new Set(['PHASE', 'REC_ID', 'ID', 'CREATE_DATE', 'CREATE_BY', 'UPDATE_DATE', 'UPDATE_BY'])
+      CF1: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'PHASE_TYPE',
+        'SORT_ORDER',
+        'TMHP_FLAG',
+      ]),
+      CFB: new Set(['PHASE', 'REC_ID', 'ID', 'PHASE_TYPE']),
+      CFI: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'SORT_ORDER',
+        'PHASE_TYPE',
+        'TMHP_FLAG',
+      ]),
+      CFM: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      CFP: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CFR: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CLC: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CLS: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CMD: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CMR: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CNB: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CNP: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CNC: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_COV: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CPQ: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CPS: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CPT: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CRC: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CSG: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CSI: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CSP: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CSR: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_CSS: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_DA2: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_DA3: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_DAD: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_DCE: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_SSAS_DIAGNOSIS: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_ECC: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_FCD: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_FSR: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_SSAS_SERVICE_RESI_LOCATION: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_LST: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_SSAS_MOVEMENT_SEQUENCES: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_PME: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_SSAS_REFERENCE_TABLE: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
+      MG1_SGO: new Set([
+        'PHASE',
+        'REC_ID',
+        'ID',
+        'CREATE_DATE',
+        'CREATE_BY',
+        'UPDATE_DATE',
+        'UPDATE_BY',
+      ]),
     };
     this.hiddenColumns = tableSpecificHiddenColumns[apiTableName] || new Set();
-    this.columnsToDisplay.set(mappedKeys.filter(column => !this.hiddenColumns.has(column)));
+    this.columnsToDisplay.set(
+      mappedKeys.filter(column => !this.hiddenColumns.has(column))
+    );
     const displayTableName = getDisplayTableName(apiTableName);
     this.tableName.set(`${displayTableName} PRODUCTION VIEW`);
     this.data.set(tableRows);
@@ -301,7 +609,10 @@ export class ProductionTablesComponent implements AfterViewInit {
 
     if (tableRows.length > 2500) {
       this.dataSource.paginator = this.paginator;
+    } else {
+      this.dataSource.paginator = null; // Disable pagination if less than 2500 rows
     }
+    this.dataSource.sort = this.sort;
   }
 
   openDialog() {
@@ -311,16 +622,22 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.dialog.open(SearchTableDialogComponent, {
       width: '600px',
       maxWidth: '90vw',
-      data: { tableName: apiTableName }
+      data: { tableName: apiTableName },
     });
   }
 
-
   openExportDialog() {
     console.log('Opening Export Dialog...');
-    console.log('this.dataSource.data:', JSON.stringify(this.dataSource?.data, null, 2));
+    console.log(
+      'this.dataSource.data:',
+      JSON.stringify(this.dataSource?.data, null, 2)
+    );
 
-    if (!this.dataSource || !this.dataSource.data || this.dataSource.data.length === 0) {
+    if (
+      !this.dataSource ||
+      !this.dataSource.data ||
+      this.dataSource.data.length === 0
+    ) {
       console.warn('No data available for export!');
       return;
     }
@@ -329,8 +646,8 @@ export class ProductionTablesComponent implements AfterViewInit {
       width: '600px',
       data: {
         rows: this.dataSource.data, // Pass rows
-        columnsToDisplay: this.columnsToDisplay() // Pass column names
-      }
+        columnsToDisplay: this.columnsToDisplay(), // Pass column names
+      },
     });
 
     dialogRef.afterClosed().subscribe(selectedData => {
@@ -348,7 +665,7 @@ export class ProductionTablesComponent implements AfterViewInit {
     const headers = this.columnsToDisplay(); // Convert signal to array
     const csvContent = [
       headers.join(','), // Header row
-      ...selectedRows.map(row => headers.map(col => row[col]).join(','))
+      ...selectedRows.map(row => headers.map(col => row[col]).join(',')),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -360,5 +677,4 @@ export class ProductionTablesComponent implements AfterViewInit {
     a.click();
     document.body.removeChild(a);
   }
-
 }

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
-import { ProductionTablePaginationResponse } from '../shared/types';
+import { delay, Observable, of } from 'rxjs';
+import { getProductionTablesCFB2500 } from './production-tables.mock';
 
 @Injectable({
   providedIn: 'root',
@@ -11,14 +11,17 @@ export class ProductionTablesService {
   private apiUrl = 'http://168.60.227.116:8080/productionTableDetails';
 
   getProductionTables(tableName: string): Observable<any> {
-    return this.#httpClient
-      .post<ProductionTablePaginationResponse>(`${this.apiUrl}`, { tableName })
-      .pipe(map(response => {
-        return {
-          totalRecords: response.totalRowCount,
-          response: response.rows || []
-        }
+    return of(getProductionTablesCFB2500()).pipe(delay(1000));
 
-      }));
+    // return this.#httpClient
+    //   .post<ProductionTablePaginationResponse>(`${this.apiUrl}`, { tableName })
+    //   .pipe(
+    //     map(response => {
+    //       return {
+    //         totalRecords: response.totalRowCount,
+    //         response: response.rows || [],
+    //       };
+    //     })
+    //   );
   }
 }

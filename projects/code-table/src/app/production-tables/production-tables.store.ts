@@ -18,12 +18,14 @@ interface ProductionTablesStore {
   data: any | null;
   _dynamicDetails: any | null;
   currentTableName: string | null;
+  totalRows: number | null;
 }
 
 const initialState: ProductionTablesStore = {
   data: [],
   _dynamicDetails: null,
-  currentTableName: null
+  currentTableName: null,
+  totalRows: null,
 };
 
 const availableProductionTables: ProductionTable[] = [
@@ -65,7 +67,7 @@ const availableProductionTables: ProductionTable[] = [
   { id: 36, name: 'MSQ - MOVEMENT_SEQUENCES', data: [] },
   { id: 37, name: 'PME - TMHP MUTEX', data: [] },
   { id: 38, name: 'REF - REFERENCE_TABLE', data: [] },
-  { id: 39, name: 'SGO - SRVC GRP SRVC OVERLAP', data: [] }
+  { id: 39, name: 'SGO - SRVC GRP SRVC OVERLAP', data: [] },
 ];
 
 export const ProductionTablesStore = signalStore(
@@ -77,11 +79,14 @@ export const ProductionTablesStore = signalStore(
   })),
   withMethods(({ _productionTablesService, _appStore, ...store }) => ({
     getTableDetails() {
-      return store.data();
+      return {
+        data: store.data(),
+        totalRows: store.totalRows(),
+      };
     },
     loadProductionTables: rxMethod<string>(
       pipe(
-        switchMap((name) => {
+        switchMap(name => {
           if (!name) {
             _appStore.updateProductionTables(availableProductionTables);
             return []; // Return an empty observable array to prevent API call
@@ -91,13 +96,12 @@ export const ProductionTablesStore = signalStore(
               error: (error: { message: string }) => {
                 patchState(store, { data: null });
               },
-              next: tableRows => {
+              next: tableData => {
                 patchState(store, {
-                  data: tableRows,
+                  data: tableData.rows,
+                  totalRows: tableData.totalRowCount || 0,
                 });
-                _appStore.updateProductionTables(
-                  availableProductionTables
-                );
+                _appStore.updateProductionTables(availableProductionTables);
               },
             })
           );
@@ -107,9 +111,11 @@ export const ProductionTablesStore = signalStore(
     updateDynamicDetails(details: ProductionTableData | null) {
       patchState(store, { _dynamicDetails: details });
       patchState(store, {
-        data: store.data()?.map((item: ProductionTableData) =>
-          item['ID'] === details?.['ID'] ? details : item
-        ),
+        data: store
+          .data()
+          ?.map((item: ProductionTableData) =>
+            item['ID'] === details?.['ID'] ? details : item
+          ),
       });
     },
     updateProdRows(tblRows: any[]) {
@@ -121,7 +127,7 @@ export const ProductionTablesStore = signalStore(
     },
     getDynamicDetails() {
       return store._dynamicDetails;
-    }
+    },
   })),
   withHooks(store => ({
     onDestroy() {

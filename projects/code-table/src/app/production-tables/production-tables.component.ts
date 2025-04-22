@@ -87,6 +87,7 @@ export class ProductionTablesComponent implements AfterViewInit {
   totalRows: number = 0;
   pageSizeOptions: number[] = [];
   private cdr = inject(ChangeDetectorRef);
+  protected selectedRow: any;
 
   protected displayedColumns = signal<string[]>([]);
   protected columnsToDisplay = signal<string[]>([]);
@@ -192,6 +193,7 @@ export class ProductionTablesComponent implements AfterViewInit {
   }
 
   showDetails(row: ProductionTableData) {
+    this.selectedRow = this.selectedRow === row ? null : row;
     // Update store with selected row details
     this.#productionTablesStore.updateDynamicDetails(row);
 
@@ -607,12 +609,12 @@ export class ProductionTablesComponent implements AfterViewInit {
     this.data.set(tableRows);
     // this.dataSource.data = tableRows;
 
-    if (tableRows.length > 2500) {
-      this.dataSource.paginator = this.paginator;
-    } else {
-      this.dataSource.paginator = null; // Disable pagination if less than 2500 rows
-    }
-    this.dataSource.sort = this.sort;
+    // if (tableRows.length > 2500) {
+    //   this.dataSource.paginator = this.paginator;
+    // } else {
+    //   this.dataSource.paginator = null; // Disable pagination if less than 2500 rows
+    // }
+    // this.dataSource.sort = this.sort;
   }
 
   openDialog() {

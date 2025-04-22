@@ -5,7 +5,7 @@ $common-size: var(--common-size);
 .main-container {
   @apply max-w-full grow;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: $common-size;
+  // border-radius: $common-size;
 
   .mat-drawer {
     @apply overflow-x-auto;

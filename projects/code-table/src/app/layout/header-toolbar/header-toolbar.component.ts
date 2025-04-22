@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { AppStore } from '../../app.store';
 import { MatToolbar } from '@angular/material/toolbar';
-import { MatIconButton } from '@angular/material/button';
+import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { LayoutStore } from '../layout.store';
 
@@ -10,6 +10,7 @@ import { LayoutStore } from '../layout.store';
     MatToolbar,    
     MatIcon,    
     MatIconButton,
+    MatButtonModule,
   ],
   selector: 'app-header-toolbar',
   styleUrl: './header-toolbar.component.scss',

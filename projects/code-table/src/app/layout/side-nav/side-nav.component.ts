@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { map, Observable } from 'rxjs';
 import { SearchTableDialogComponent } from '../../production-tables/search/searchtable-dialog.component';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-side-nav',
@@ -19,7 +20,8 @@ import { SearchTableDialogComponent } from '../../production-tables/search/searc
     CommonModule,    
     MatTreeModule,
     RouterModule,
-    MatIconModule
+    MatIconModule,
+    MatButtonModule,
   ]
 })
 export class SideNavComponent {

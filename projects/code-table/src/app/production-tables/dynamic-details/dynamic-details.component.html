@@ -1,4 +1,4 @@
-<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+<mat-tab-group class="dynammics-details-tab-container" mat-stretch-tabs="false" mat-align-tabs="start" >
   <mat-tab label="Dynamic Details">
     <form [formGroup]="dynamicDetailsForm" class="dynamic-details-form">
       <input type="hidden" formControlName="ID">
@@ -13,29 +13,32 @@
             <ng-container *ngIf="key !== 'ID' && key !== 'REC_ID' && i % 2 === 0">
               <div class="field-row">
                 <label class="field-label">{{ columnLabels?.[key] | uppercase }}</label>
-                <mat-form-field appearance="outline" class="field-input">
-                  <ng-container *ngIf="isRangeLimitField(key); else normalInput">
-                    <!-- Number input with controls -->
-                    <div class="number-input-container">
-                      <input matInput type="number" formControlName="{{ key }}" />
-                      <div class="number-controls">
+                <div class="form-field-compact">
+                  <mat-form-field appearance="outline" class="field-input" 
+                  [class.date-field]="key.toLowerCase().includes('date') && key !== 'REC_ID'">
+                    <ng-container *ngIf="isRangeLimitField(key); else normalInput">
+                      <!-- Number input with controls -->
+                      <div class="number-input-container">
+                        <input matInput type="number" formControlName="{{ key }}" />
+                        <div class="number-controls">
+                        </div>
                       </div>
-                    </div>
-                  </ng-container>
-                  <ng-template #normalInput>
-                    <!--id read only -->
-                    <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'REC_ID'; else textOrNumberInput">
-                      <input matInput [matDatepicker]="datePickerLeft" formControlName="{{ key }}" />
-                      <mat-datepicker-toggle matSuffix [for]="datePickerLeft"></mat-datepicker-toggle>
-                      <mat-datepicker #datePickerLeft></mat-datepicker>
                     </ng-container>
-                    <ng-template #textOrNumberInput>
-                    <!--UI VALIDATION FOR DYNAMIC DETAILS--> 
-                      <input matInput formControlName="{{ key }}" [attr.maxlength]="fieldMaxLengthMap[key] || null"
-                      (input)="onInputLimit($event, fieldMaxLengthMap[key])" (paste)="blockOverPaste($event, fieldMaxLengthMap[key])"/>           
+                    <ng-template #normalInput>
+                      <!--id read only -->
+                      <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'REC_ID'; else textOrNumberInput">
+                        <input matInput [matDatepicker]="datePickerLeft" formControlName="{{ key }}" />
+                        <mat-datepicker-toggle matSuffix [for]="datePickerLeft"></mat-datepicker-toggle>
+                        <mat-datepicker #datePickerLeft></mat-datepicker>
+                      </ng-container>
+                      <ng-template #textOrNumberInput>
+                      <!--UI VALIDATION FOR DYNAMIC DETAILS--> 
+                        <input matInput formControlName="{{ key }}" [attr.maxlength]="fieldMaxLengthMap[key] || null"
+                        (input)="onInputLimit($event, fieldMaxLengthMap[key])" (paste)="blockOverPaste($event, fieldMaxLengthMap[key])"/>           
+                      </ng-template>
                     </ng-template>
-                  </ng-template>
-                </mat-form-field>
+                  </mat-form-field>
+                </div>                
               </div>
             </ng-container>
           </ng-container>
@@ -47,29 +50,32 @@
             <ng-container *ngIf="key !== 'REC_ID' && i % 2 !== 0">
               <div class="field-row">
                 <label class="field-label">{{ columnLabels?.[key] | uppercase }}</label>
-                <mat-form-field appearance="outline" class="field-input">
-                  <ng-container *ngIf="isRangeLimitField(key); else normalInput">
-                    <!-- Number input with controls -->
-                    <div class="number-input-container">
-                      <input matInput type="number" formControlName="{{ key }}" />
-                      <div class="number-controls">
+                <div class="form-field-compact">
+                  <mat-form-field appearance="outline" class="field-input"
+                  [class.date-field]="key.toLowerCase().includes('date') && key !== 'REC_ID'">
+                    <ng-container *ngIf="isRangeLimitField(key); else normalInput">
+                      <!-- Number input with controls -->
+                      <div class="number-input-container">
+                        <input matInput type="number" formControlName="{{ key }}" />
+                        <div class="number-controls">
+                        </div>
                       </div>
-                    </div>
-                  </ng-container>
-                  <ng-template #normalInput>
-                    <!--ID readonly -->
-                    <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'REC_ID'; else textOrNumberInput">                      
-                      <input matInput [matDatepicker]="datePickerRight" formControlName="{{ key }}" />
-                      <mat-datepicker-toggle matSuffix [for]="datePickerRight"></mat-datepicker-toggle>
-                      <mat-datepicker #datePickerRight></mat-datepicker>
                     </ng-container>
-                    <ng-template #textOrNumberInput>
-<!--UI validation for DYNAMIC DETAILS-->
-                      <input matInput formControlName="{{ key }}" [attr.maxlength]="fieldMaxLengthMap[key] || null"
-                      (input)="onInputLimit($event, fieldMaxLengthMap[key])" (paste)="blockOverPaste($event, fieldMaxLengthMap[key])"/>                   
+                    <ng-template #normalInput>
+                      <!--ID readonly -->
+                      <ng-container *ngIf="key.toLowerCase().includes('date') && key !== 'REC_ID'; else textOrNumberInput">                      
+                        <input matInput [matDatepicker]="datePickerRight" formControlName="{{ key }}" />
+                        <mat-datepicker-toggle matSuffix [for]="datePickerRight"></mat-datepicker-toggle>
+                        <mat-datepicker #datePickerRight></mat-datepicker>
+                      </ng-container>
+                      <ng-template #textOrNumberInput>
+  <!--UI validation for DYNAMIC DETAILS-->
+                        <input matInput formControlName="{{ key }}" [attr.maxlength]="fieldMaxLengthMap[key] || null"
+                        (input)="onInputLimit($event, fieldMaxLengthMap[key])" (paste)="blockOverPaste($event, fieldMaxLengthMap[key])"/>                   
+                      </ng-template>
                     </ng-template>
-                  </ng-template>
-                </mat-form-field>
+                  </mat-form-field>
+                </div>
               </div>
             </ng-container>
           </ng-container>

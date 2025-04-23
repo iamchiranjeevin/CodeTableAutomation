@@ -1,5 +1,5 @@
 <div
-  class="w-full h-full max-w-full flex flex-col items-stretch justify-items-start">
+  class="production-tables-container w-full h-full max-w-full flex flex-col items-stretch justify-items-start">
   <div class="flex flex-row items-center justify-between pb-2">
     <h2>
       <strong>{{ tableName() }}</strong>
@@ -63,11 +63,11 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columnsToDisplay()"></tr>
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplay(); sticky: true"></tr>
         <tr
           class="mat-mdc-row-prod"
           mat-row
-          *matRowDef="let row; columns: columnsToDisplay()"
+          *matRowDef="let row; columns: columnsToDisplay();"
           (click)="showDetails(row)"
           [class.selected-row]="selectedRow === row"></tr>
       </table>
@@ -76,9 +76,10 @@
     <!-- Pagination -->
     @if (totalRows > 2500) {
       <mat-paginator
+      class="text-xs h-10"
         #paginator
         [length]="totalRows"
-        [pageSize]="200"
+        [pageSize]="2500"
         [pageSizeOptions]="pageSizeOptions"
         [showFirstLastButtons]="true">
       </mat-paginator>

@@ -142,10 +142,7 @@ export class ProductionTablesComponent implements AfterViewInit {
           this.dataSource = new MatTableDataSource(tableData.data);
           this.totalRows = tableData.totalRows ?? 0;
 
-          this.pageSizeOptions = Array.from(
-            { length: Math.ceil(this.totalRows / 200) },
-            (_, i) => (i + 1) * 200
-          );
+            this.pageSizeOptions = [2500, 3000, 3500, 4000];
 
           setTimeout(() => {
             if (this.dataSource) {
